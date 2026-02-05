@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Act
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import React from 'react';
-import { API_ENDPOINTS } from '../constants/api';
+import { useRouter } from 'expo-router';
+import { API_ENDPOINTS, API_BASE_URL } from '../constants/api';
 
 // Types matching backend API
 interface QuestionOption {
@@ -24,6 +25,7 @@ interface ApiResponse {
 }
 
 export default function OnboardingScreen() {
+  const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
@@ -32,12 +34,24 @@ export default function OnboardingScreen() {
 
   // Fetch questions on mount
   useEffect(() => {
+    console.log('API Base URL:', API_BASE_URL);
     fetchQuestions();
   }, []);
 
   const fetchQuestions = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.ONBOARDING_QUESTIONS);
+      // Debug: Log the API URL being used
+      console.log('Fetching from:', API_ENDPOINTS.ONBOARDING_QUESTIONS);
+
+      // Add timeout to prevent infinite loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(API_ENDPOINTS.ONBOARDING_QUESTIONS, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
       const data: ApiResponse = await response.json();
 
       if (data.success) {
@@ -46,8 +60,12 @@ export default function OnboardingScreen() {
         setError('Failed to load questions');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
       console.error('Error fetching questions:', err);
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timeout. Please check your connection.');
+      } else {
+        setError('Network error. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -60,12 +78,15 @@ export default function OnboardingScreen() {
   const handleContinue = () => {
     if (selectedOptionId === null) return;
 
-    // Advance to next question
-    if (currentQuestionIndex < questions.length - 1) {
+    // Check if this is the last question
+    if (currentQuestionIndex === questions.length - 1) {
+      // Navigate to onboarding complete screen
+      router.push('/onboarding-complete');
+    } else {
+      // Advance to next question
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedOptionId(null); // Reset selection for next question
     }
-    // TODO: Handle completion (final question)
   };
 
   // Loading state
