@@ -1,14 +1,55 @@
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
+import { useEffect } from 'react';
 import React from 'react';
+
+// DEV ONLY: Set to a route like '/onboarding' to skip auth and go directly there
+// Set to null for normal behavior
+// Examples: '/onboarding', '/sign-up', '/onboarding-complete', '/routine-tracker-setup'
+const DEV_INITIAL_ROUTE: string | null = null;
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  useEffect(() => {
+    // Dev override: skip auth check and go directly to specified route
+    if (__DEV__ && DEV_INITIAL_ROUTE) {
+      router.replace(DEV_INITIAL_ROUTE);
+      return;
+    }
+    if (isLoaded && isSignedIn) {
+      router.replace('/(tabs)');
+    }
+  }, [isLoaded, isSignedIn]);
 
   const handleContinue = () => {
     router.push('/onboarding');
   };
+
+  // Show loading while checking auth
+  if (!isLoaded) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000000" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If signed in, show loading while redirecting
+  if (isSignedIn) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000000" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -63,6 +104,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,

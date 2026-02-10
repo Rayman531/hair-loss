@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import onboarding from './routes/onboarding'
+import routine from './routes/routine'
 
 type Env = {
   DATABASE_URL: string;
@@ -17,5 +18,8 @@ app.get('/', (c) => {
 
 // Mount onboarding routes
 app.route('/api/onboarding', onboarding)
+
+// Mount routine routes
+app.route('/api/routine', routine)
 
 export default app

@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import React from 'react';
 
 export default function OnboardingCompleteScreen() {
+  const router = useRouter();
+
   const handleCreateAccount = () => {
-    // TODO: Navigate to account creation
-    console.log('Navigate to account creation');
+    router.push('/sign-up');
   };
 
   return (
