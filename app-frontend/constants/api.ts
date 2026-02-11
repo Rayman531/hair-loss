@@ -44,4 +44,6 @@ export const API_BASE_URL = getApiBaseUrl();
 export const API_ENDPOINTS = {
   ONBOARDING_QUESTIONS: `${API_BASE_URL}/api/onboarding/questions`,
   ONBOARDING_RESPONSES: `${API_BASE_URL}/api/onboarding/responses`,
+  ROUTINE: `${API_BASE_URL}/api/routine`,
+  ROUTINE_EXISTS: `${API_BASE_URL}/api/routine/exists`,
 };

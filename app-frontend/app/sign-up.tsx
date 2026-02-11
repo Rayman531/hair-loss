@@ -55,7 +55,7 @@ export default function SignUpScreen() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.replace('/(tabs)');
+        router.replace('/routine-tracker-setup');
       } else {
         console.error('Verification incomplete:', result);
         setError('Verification failed. Please try again.');
