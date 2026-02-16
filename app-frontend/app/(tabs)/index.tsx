@@ -123,6 +123,12 @@ export default function HomeScreen() {
           <Link href="/routine-tracker-setup" style={styles.devLink}>
             <Text style={styles.devLinkText}>→ Routine Tracker Setup</Text>
           </Link>
+          <Link href="/dashboard" style={styles.devLink}>
+            <Text style={styles.devLinkText}>→ Dashboard</Text>
+          </Link>
+          <Link href="/progress-tracker" style={styles.devLink}>
+            <Text style={styles.devLinkText}>→ Progress Tracker</Text>
+          </Link>
           <Link href="/" style={styles.devLink}>
             <Text style={styles.devLinkText}>→ Welcome (Index)</Text>
           </Link>

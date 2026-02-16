@@ -46,4 +46,6 @@ export const API_ENDPOINTS = {
   ONBOARDING_RESPONSES: `${API_BASE_URL}/api/onboarding/responses`,
   ROUTINE: `${API_BASE_URL}/api/routine`,
   ROUTINE_EXISTS: `${API_BASE_URL}/api/routine/exists`,
+  PROGRESS: `${API_BASE_URL}/api/progress`,
+  PROGRESS_UPLOAD: `${API_BASE_URL}/api/progress/upload`,
 };
