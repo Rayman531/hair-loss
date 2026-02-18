@@ -1,111 +1,154 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, View, Text, Pressable } from 'react-native';
+import { StyleSheet, ActivityIndicator, Pressable, ScrollView, View, Text } from 'react-native';
+import { useUser, useAuth } from '@clerk/clerk-expo';
+import { useRouter, Link } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { fetchDashboard } from '@/lib/api/dashboard';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/clerk-expo';
 
-// Replace this with your deployed Cloudflare Worker URL
-// For local development: 'http://localhost:8787'
-// For production: 'https://your-worker.your-subdomain.workers.dev'
-const API_URL = 'http://localhost:8787';
+type Treatment = {
+  id: number;
+  treatmentType: string;
+  timeOfDay: string;
+  daysOfWeek: string[];
+};
 
-export default function HomeScreen() {
-  const [message, setMessage] = useState<string>('Loading...');
-  const [error, setError] = useState<string | null>(null);
+type DashboardData = {
+  routines: Treatment[];
+  todaysTreatments: Treatment[];
+  motivationalMessage: string;
+  progressTrackerInitialized: boolean;
+};
+
+const TREATMENT_LABELS: Record<string, string> = {
+  minoxidil: 'Minoxidil 5%',
+  finasteride: 'Finasteride 1mg',
+  microneedling: 'Microneedling',
+  ketoconazole: 'Ketoconazole Shampoo',
+  hair_oils: 'Hair Oils',
+};
+
+const PRODUCTS = [
+  { id: 'rosemary-oil', name: 'Rosemary Oil', emoji: '🌿', color: '#E8F5E9' },
+  { id: 'finasteride', name: 'Finasteride', emoji: '💊', color: '#FFF3E0' },
+  { id: 'microneedling', name: 'Microneedling', emoji: '🪡', color: '#F3E5F5' },
+  { id: 'ketoconazole', name: 'Ketoconazole', emoji: '🧴', color: '#E3F2FD' },
+  { id: 'biotin', name: 'Biotin', emoji: '💛', color: '#FFFDE7' },
+];
+
+export default function DashboardScreen() {
+  const { user } = useUser();
   const { signOut } = useAuth();
+  const router = useRouter();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(API_URL)
-      .then((response) => response.text())
-      .then((data) => {
-        setMessage(data);
-        setError(null);
+    if (!user?.id) return;
+
+    fetchDashboard(user.id)
+      .then((res) => {
+        if (res.success) {
+          setData(res.data);
+        } else {
+          setError(res.error?.message ?? 'Failed to load dashboard');
+        }
       })
       .catch((err) => {
-        setError('Failed to fetch from backend');
-        setMessage('Error');
-        console.error('Error fetching from backend:', err);
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-  }, []);
+  }, [user?.id]);
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </ThemedView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ThemedText style={{ color: 'red' }}>{error}</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">{message}</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      {error && (
-        <ThemedView style={styles.stepContainer}>
-          <ThemedText type="defaultSemiBold" style={{ color: 'red' }}>
-            {error}
-          </ThemedText>
-        </ThemedView>
-      )}
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {/* Header */}
+      <Text style={styles.headerLabel}>Dashboard</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn absolutely nothing about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      {/* Welcome */}
+      <ThemedText type="title" style={styles.welcome}>
+        Welcome back, {user?.firstName ?? 'there'}
+      </ThemedText>
+
+      {/* Motivational message */}
+      {data?.motivationalMessage && (
+        <View style={styles.messageCard}>
+          <Text style={styles.messageEmoji}>👑</Text>
+          <Text style={styles.messageText}>{data.motivationalMessage}</Text>
+        </View>
+      )}
+
+      {/* Today's Routine */}
+      <View style={styles.routineCard}>
+        <Text style={styles.routineTitle}>Today's Routine:</Text>
+        {data?.todaysTreatments && data.todaysTreatments.length > 0 ? (
+          data.todaysTreatments.map((t) => (
+            <View key={t.id} style={styles.routineItem}>
+              <Text style={styles.bullet}>{'\u2022'}</Text>
+              <Text style={styles.routineText}>
+                {TREATMENT_LABELS[t.treatmentType] ?? t.treatmentType}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.routineText}>No treatments scheduled today.</Text>
+        )}
+      </View>
+
+      {/* Explore Products */}
+      <ThemedText type="subtitle" style={styles.sectionTitle}>
+        Explore Products
+      </ThemedText>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.productsRow}
+      >
+        {PRODUCTS.map((product) => (
+          <Pressable key={product.id} style={styles.productCard}>
+            <View style={[styles.productIcon, { backgroundColor: product.color }]}>
+              <Text style={styles.productEmoji}>{product.emoji}</Text>
+            </View>
+            <Text style={styles.productName}>{product.name}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      {/* Progress Tracker */}
+      {!data?.progressTrackerInitialized && (
+        <Pressable
+          style={styles.progressCard}
+          onPress={() => router.push('/dashboard/progress')}
+        >
+          <View style={styles.progressContent}>
+            <Text style={styles.progressTitle}>Progress Tracker</Text>
+            <Text style={styles.progressSub}>
+              Click here to set up your progress tracker
+            </Text>
+          </View>
+          <Text style={styles.progressArrow}>↗</Text>
+        </Pressable>
+      )}
 
       {/* Dev Navigation Menu - only visible in development */}
       {__DEV__ && (
@@ -123,41 +166,153 @@ export default function HomeScreen() {
           <Link href="/routine-tracker-setup" style={styles.devLink}>
             <Text style={styles.devLinkText}>→ Routine Tracker Setup</Text>
           </Link>
-          <Link href="/dashboard" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Dashboard</Text>
-          </Link>
-          <Link href="/progress-tracker" style={styles.devLink}>
+          <Link href="/dashboard/progress" style={styles.devLink}>
             <Text style={styles.devLinkText}>→ Progress Tracker</Text>
-          </Link>
-          <Link href="/" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Welcome (Index)</Text>
           </Link>
           <Pressable onPress={() => signOut()} style={styles.signOutBtn}>
             <Text style={styles.signOutText}>Sign Out</Text>
           </Pressable>
         </View>
       )}
-    </ParallaxScrollView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    padding: 20,
+    paddingTop: 56,
+    paddingBottom: 32,
+  },
+
+  // Header
+  headerLabel: {
+    fontSize: 13,
+    color: '#999',
+    marginBottom: 12,
+  },
+
+  // Welcome
+  welcome: {
+    marginBottom: 20,
+  },
+
+  // Motivational message card
+  messageCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: '#FFF8E7',
+    marginBottom: 24,
+  },
+  messageEmoji: {
+    fontSize: 28,
+    marginTop: 2,
+  },
+  messageText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#444',
+  },
+
+  // Today's Routine card
+  routineCard: {
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: '#FFF8E7',
+    marginBottom: 28,
+  },
+  routineTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  routineItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingVertical: 3,
   },
-  stepContainer: {
-    gap: 8,
+  bullet: {
+    fontSize: 18,
+    color: '#333',
+  },
+  routineText: {
+    fontSize: 15,
+    color: '#444',
+  },
+
+  // Explore Products
+  sectionTitle: {
+    marginBottom: 14,
+  },
+  productsRow: {
+    gap: 16,
+    paddingBottom: 4,
+    marginBottom: 24,
+  },
+  productCard: {
+    alignItems: 'center',
+    width: 90,
+  },
+  productIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  productEmoji: {
+    fontSize: 28,
   },
+  productName: {
+    fontSize: 12,
+    color: '#555',
+    textAlign: 'center',
+  },
+
+  // Progress Tracker card
+  progressCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 18,
+    backgroundColor: '#F5D76E',
+  },
+  progressContent: {
+    flex: 1,
+  },
+  progressTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  progressSub: {
+    fontSize: 13,
+    color: '#555',
+  },
+  progressArrow: {
+    fontSize: 24,
+    color: '#333',
+    marginLeft: 12,
+  },
+
+  // Dev Navigation
   devMenu: {
     marginTop: 30,
     padding: 15,

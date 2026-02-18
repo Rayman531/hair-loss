@@ -48,4 +48,10 @@ export const API_ENDPOINTS = {
   ROUTINE_EXISTS: `${API_BASE_URL}/api/routine/exists`,
   PROGRESS: `${API_BASE_URL}/api/progress`,
   PROGRESS_UPLOAD: `${API_BASE_URL}/api/progress/upload`,
+  TRACKER_ROUTINE: `${API_BASE_URL}/api/tracker/routine`,
+  TRACKER_TREATMENTS: `${API_BASE_URL}/api/tracker/treatments`,
+  TRACKER_TREATMENT_LOGS: `${API_BASE_URL}/api/tracker/treatment-logs`,
+  TRACKER_SIDE_EFFECTS: `${API_BASE_URL}/api/tracker/side-effects`,
+  TRACKER_SUMMARY: `${API_BASE_URL}/api/tracker/summary`,
+  TRACKER_HEATMAP: `${API_BASE_URL}/api/tracker/heatmap`,
 };

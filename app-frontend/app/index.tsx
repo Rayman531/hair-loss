@@ -29,6 +29,10 @@ export default function WelcomeScreen() {
     router.push('/onboarding');
   };
 
+  const handleSignIn = () => {
+    router.push('/sign-in');
+  };
+
   // Show loading while checking auth
   if (!isLoaded) {
     return (
@@ -93,6 +97,14 @@ export default function WelcomeScreen() {
             onPress={handleContinue}
           >
             <Text style={styles.buttonText}>Continue</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.signInButton}
+            activeOpacity={0.8}
+            onPress={handleSignIn}
+          >
+            <Text style={styles.signInButtonText}>Already have an account? Sign In</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -212,5 +224,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  signInButton: {
+    marginTop: 16,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signInButtonText: {
+    color: '#666666',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

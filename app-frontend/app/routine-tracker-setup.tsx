@@ -57,6 +57,9 @@ export default function RoutineTrackerSetupScreen() {
   const [minute, setMinute] = useState('00');
   const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
 
+  // Tracker routine ID (created once, reused for all treatments)
+  const [trackerRoutineId, setTrackerRoutineId] = useState<string | null>(null);
+
   // UI state
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -145,6 +148,31 @@ export default function RoutineTrackerSetupScreen() {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }, [hour, minute, period]);
 
+  const ensureTrackerRoutine = async (headers: Record<string, string>): Promise<string | null> => {
+    if (trackerRoutineId) return trackerRoutineId;
+
+    // Check if routine already exists
+    const getRes = await fetch(API_ENDPOINTS.TRACKER_ROUTINE, { headers });
+    const getData = await getRes.json();
+    if (getData.success && getData.data) {
+      setTrackerRoutineId(getData.data.id);
+      return getData.data.id;
+    }
+
+    // Create new routine
+    const postRes = await fetch(API_ENDPOINTS.TRACKER_ROUTINE, {
+      method: 'POST',
+      headers,
+    });
+    const postData = await postRes.json();
+    if (postData.success && postData.data) {
+      setTrackerRoutineId(postData.data.id);
+      return postData.data.id;
+    }
+
+    return null;
+  };
+
   const handleConfigContinue = async () => {
     if (selectedDays.size === 0) {
       setError('Please select at least one day');
@@ -152,19 +180,23 @@ export default function RoutineTrackerSetupScreen() {
     }
 
     const treatment = selectedTreatments[configIndex];
+    const treatmentInfo = TREATMENTS.find((t) => t.id === treatment);
     setSaving(true);
     setError(null);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId ?? '',
+      };
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
+      // Save to legacy routine system
       const response = await fetch(API_ENDPOINTS.ROUTINE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId ?? '',
-        },
+        headers,
         body: JSON.stringify({
           treatmentType: treatment,
           timeOfDay: to24Hour(),
@@ -179,6 +211,19 @@ export default function RoutineTrackerSetupScreen() {
       if (!response.ok) {
         setError(data.error?.message || 'Failed to save treatment');
         return;
+      }
+
+      // Also save to tracker system (routine + treatment)
+      const routineId = await ensureTrackerRoutine(headers);
+      if (routineId) {
+        await fetch(API_ENDPOINTS.TRACKER_TREATMENTS, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            name: treatmentInfo?.label ?? treatment,
+            frequencyPerWeek: selectedDays.size,
+          }),
+        });
       }
 
       // Mark saved

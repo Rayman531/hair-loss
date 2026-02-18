@@ -4,6 +4,7 @@ import onboarding from './routes/onboarding'
 import routine from './routes/routine'
 import dashboard from './routes/dashboard'
 import progress from './routes/progress'
+import tracker from './routes/tracker'
 
 type Env = {
   DATABASE_URL: string;
@@ -34,5 +35,8 @@ app.route('/api/dashboard', dashboard)
 
 // Mount progress photo routes
 app.route('/api/progress', progress)
+
+// Mount routine tracker routes
+app.route('/api/tracker', tracker)
 
 export default app
