@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 export type R2Env = {
   R2_ACCESS_KEY_ID: string;
@@ -55,6 +55,23 @@ export async function uploadToR2(
   const fullUrl = `${publicUrl}/${key}`;
   console.log(`[R2] Upload complete: ${key}`);
   return fullUrl;
+}
+
+export async function deleteFromR2(env: R2Env, key: string): Promise<void> {
+  const client = createR2Client(env);
+  console.log(`[R2] Deleting: ${key}`);
+  await client.send(
+    new DeleteObjectCommand({
+      Bucket: env.R2_BUCKET_NAME,
+      Key: key,
+    }),
+  );
+  console.log(`[R2] Delete complete: ${key}`);
+}
+
+export function extractR2Key(publicUrl: string, r2PublicUrl: string): string {
+  const base = r2PublicUrl.replace(/\/$/, '');
+  return publicUrl.replace(`${base}/`, '');
 }
 
 export function generatePhotoKey(

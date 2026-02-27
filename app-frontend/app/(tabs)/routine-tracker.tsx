@@ -6,14 +6,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { API_ENDPOINTS } from '../../constants/api';
 import JourneyHeader from '../../components/tracker/JourneyHeader';
 import WeeklyConsistency from '../../components/tracker/WeeklyConsistency';
 import AdherenceCalendar from '../../components/tracker/AdherenceCalendar';
-import CTASection from '../../components/tracker/CTASection';
+
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 interface TreatmentConsistency {
   treatment_id: string;
@@ -49,6 +53,9 @@ function getCurrentMonth(): string {
 export default function RoutineTrackerScreen() {
   const { userId } = useAuth();
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const dark = colorScheme === 'dark';
+  const colors = Colors[colorScheme ?? 'light'];
 
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
@@ -56,6 +63,16 @@ export default function RoutineTrackerScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const currentMonth = useMemo(() => getCurrentMonth(), []);
+
+  const themed = useMemo(() => ({
+    screen: { backgroundColor: colors.background },
+    emptyTitle: { color: dark ? '#ECEDEE' : '#1A1A1A' },
+    editButton: {
+      backgroundColor: colors.background,
+      borderColor: dark ? '#ECEDEE' : '#1A1A1A',
+    },
+    editButtonText: { color: dark ? '#ECEDEE' : '#1A1A1A' },
+  }), [dark, colors]);
 
   const fetchData = useCallback(async () => {
     if (!userId) return;
@@ -66,12 +83,11 @@ export default function RoutineTrackerScreen() {
     const headers = { 'X-User-Id': userId };
 
     try {
-      // Fetch summary and heatmap in parallel
       const [summaryRes, heatmapRes] = await Promise.all([
         fetch(API_ENDPOINTS.TRACKER_SUMMARY, { headers }).then((r) => r.json()),
         fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${currentMonth}`, { headers })
           .then((r) => r.json())
-          .catch(() => null), // Don't block page if heatmap fails
+          .catch(() => null),
       ]);
 
       if (summaryRes.success && summaryRes.data) {
@@ -90,27 +106,27 @@ export default function RoutineTrackerScreen() {
     }
   }, [userId, currentMonth]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
-  // Loading state
   if (loading) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView style={[styles.screen, themed.screen]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#1A1A1A" />
+          <ActivityIndicator size="large" color={dark ? '#ECEDEE' : '#1A1A1A'} />
         </View>
       </SafeAreaView>
     );
   }
 
-  // Error / no routine state
   if (error || !summary) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView style={[styles.screen, themed.screen]}>
         <View style={styles.centered}>
-          <Text style={styles.emptyTitle}>No Routine Yet</Text>
+          <Text style={[styles.emptyTitle, themed.emptyTitle]}>No Routine Yet</Text>
           <Text style={styles.emptySubtext}>
             {error || 'Set up your routine to start tracking your hair journey.'}
           </Text>
@@ -120,7 +136,7 @@ export default function RoutineTrackerScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, themed.screen]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -139,9 +155,13 @@ export default function RoutineTrackerScreen() {
           <AdherenceCalendar month={heatmap.month} days={heatmap.days} />
         )}
 
-        <CTASection
-          onPress={() => router.push('/tracker/side-effects' as any)}
-        />
+        <TouchableOpacity
+          style={[styles.editButton, themed.editButton]}
+          onPress={() => router.push('/tracker/edit' as any)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.editButtonText, themed.editButtonText]}>Edit Routine</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -150,7 +170,6 @@ export default function RoutineTrackerScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -174,7 +193,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1A1A1A',
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -183,5 +201,18 @@ const styles = StyleSheet.create({
     color: '#999999',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  editButton: {
+    paddingVertical: 18,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+    borderWidth: 2,
+    marginTop: 12,
+  },
+  editButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

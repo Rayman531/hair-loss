@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../db/drizzle';
 import { progressSessions } from '../db/schema';
-import { eq, desc } from 'drizzle-orm';
-import { uploadToR2, generatePhotoKey, validateR2Env, type R2Env } from '../lib/r2';
+import { eq, desc, and } from 'drizzle-orm';
+import { uploadToR2, deleteFromR2, extractR2Key, generatePhotoKey, validateR2Env, type R2Env } from '../lib/r2';
 
 type Env = {
   DATABASE_URL: string;
@@ -140,6 +140,80 @@ progress.get('/', async (c) => {
       error: {
         code: 'FETCH_SESSIONS_ERROR',
         message: 'Failed to fetch progress sessions',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+    }, 500);
+  }
+});
+
+// DELETE /api/progress/:id — delete a session and its R2 photos
+progress.delete('/:id', async (c) => {
+  try {
+    const db = createDrizzleConnection(c.env.DATABASE_URL);
+    const userId = c.get('userId');
+    const sessionId = c.req.param('id');
+
+    // Fetch the session and verify ownership
+    const [session] = await db
+      .select()
+      .from(progressSessions)
+      .where(
+        and(
+          eq(progressSessions.id, sessionId),
+          eq(progressSessions.userId, userId),
+        ),
+      );
+
+    if (!session) {
+      return c.json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Progress session not found' },
+      }, 404);
+    }
+
+    // Delete photos from R2 storage
+    const imageUrls = [
+      session.frontImageUrl,
+      session.topImageUrl,
+      session.rightImageUrl,
+      session.leftImageUrl,
+    ];
+
+    const r2PublicUrl = c.env.R2_PUBLIC_URL;
+    const deleteResults = await Promise.allSettled(
+      imageUrls.map((url) => {
+        const key = extractR2Key(url, r2PublicUrl);
+        return deleteFromR2(c.env, key);
+      }),
+    );
+
+    const failedDeletes = deleteResults.filter((r) => r.status === 'rejected');
+    if (failedDeletes.length > 0) {
+      console.error(`[Progress] ${failedDeletes.length} R2 deletions failed for session ${sessionId}:`,
+        failedDeletes.map((r) => (r as PromiseRejectedResult).reason),
+      );
+    }
+
+    // Delete the database record
+    await db
+      .delete(progressSessions)
+      .where(
+        and(
+          eq(progressSessions.id, sessionId),
+          eq(progressSessions.userId, userId),
+        ),
+      );
+
+    console.log(`[Progress] Session deleted: ${sessionId} for user ${userId}`);
+
+    return c.json({ success: true, data: { id: sessionId } });
+  } catch (error) {
+    console.error('Error deleting progress session:', error);
+    return c.json({
+      success: false,
+      error: {
+        code: 'DELETE_ERROR',
+        message: 'Failed to delete progress session',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 500);

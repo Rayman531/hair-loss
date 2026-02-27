@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface JourneyHeaderProps {
   journeyDay: number;
@@ -17,10 +18,13 @@ function formatStartDate(isoDate: string): string {
 }
 
 export default function JourneyHeader({ journeyDay, routineCreatedAt }: JourneyHeaderProps) {
+  const dark = useColorScheme() === 'dark';
+  const textColor = dark ? '#ECEDEE' : '#1A1A1A';
+
   return (
     <View style={styles.container}>
-      <Text style={styles.dayNumber}>Day {journeyDay}</Text>
-      <Text style={styles.title}>of Your Hair Journey</Text>
+      <Text style={[styles.dayNumber, { color: textColor }]}>Day {journeyDay}</Text>
+      <Text style={[styles.title, { color: textColor }]}>of Your Hair Journey</Text>
       <Text style={styles.subtitle}>Started on {formatStartDate(routineCreatedAt)}</Text>
     </View>
   );
@@ -34,13 +38,11 @@ const styles = StyleSheet.create({
   dayNumber: {
     fontSize: 40,
     fontWeight: '800',
-    color: '#1A1A1A',
     letterSpacing: -1,
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1A1A1A',
     marginTop: -2,
     marginBottom: 8,
   },

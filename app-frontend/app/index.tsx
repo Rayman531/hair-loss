@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
   useEffect(() => {
     // Dev override: skip auth check and go directly to specified route
     if (__DEV__ && DEV_INITIAL_ROUTE) {
-      router.replace(DEV_INITIAL_ROUTE);
+      router.replace(DEV_INITIAL_ROUTE as any);
       return;
     }
     if (isLoaded && isSignedIn) {

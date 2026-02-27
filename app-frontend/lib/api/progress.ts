@@ -82,3 +82,22 @@ export async function fetchProgressSessions(userId: string): Promise<{
 
   return response.json();
 }
+
+export async function deleteProgressSession(
+  userId: string,
+  sessionId: string,
+): Promise<{ success: boolean; error?: { message: string } }> {
+  const response = await fetch(`${API_ENDPOINTS.PROGRESS}/${sessionId}`, {
+    method: 'DELETE',
+    headers: { 'X-User-Id': userId },
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      body?.error?.message ?? `Delete failed (${response.status})`,
+    );
+  }
+
+  return response.json();
+}

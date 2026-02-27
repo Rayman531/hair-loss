@@ -51,7 +51,7 @@ export const API_ENDPOINTS = {
   TRACKER_ROUTINE: `${API_BASE_URL}/api/tracker/routine`,
   TRACKER_TREATMENTS: `${API_BASE_URL}/api/tracker/treatments`,
   TRACKER_TREATMENT_LOGS: `${API_BASE_URL}/api/tracker/treatment-logs`,
-  TRACKER_SIDE_EFFECTS: `${API_BASE_URL}/api/tracker/side-effects`,
+
   TRACKER_SUMMARY: `${API_BASE_URL}/api/tracker/summary`,
   TRACKER_HEATMAP: `${API_BASE_URL}/api/tracker/heatmap`,
 };
