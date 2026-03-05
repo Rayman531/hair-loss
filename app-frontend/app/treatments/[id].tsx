@@ -12,25 +12,24 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { getTreatmentById, TreatmentRating } from '@/lib/treatments';
 
-function RatingBar({ rating, dark }: { rating: TreatmentRating; dark: boolean }) {
+function RatingBar({ rating, colors }: { rating: TreatmentRating; colors: typeof Colors.light }) {
   const fraction = rating.numericValue / rating.maxValue;
-  const barColor = '#D4C4A0';
 
   return (
     <View style={ratingStyles.container}>
       <View style={ratingStyles.labelRow}>
-        <Text style={[ratingStyles.label, { color: dark ? '#ECEDEE' : '#1A1A1A' }]}>
+        <Text style={[ratingStyles.label, { color: colors.text }]}>
           {rating.label}
         </Text>
-        <Text style={[ratingStyles.value, { color: dark ? '#9BA1A6' : '#666' }]}>
+        <Text style={[ratingStyles.value, { color: colors.textSecondary }]}>
           {rating.value}
         </Text>
       </View>
-      <View style={[ratingStyles.track, { backgroundColor: dark ? '#2A2A2A' : '#E8E8E8' }]}>
+      <View style={[ratingStyles.track, { backgroundColor: colors.progressBarTrack }]}>
         <View
           style={[
             ratingStyles.fill,
-            { width: `${fraction * 100}%`, backgroundColor: barColor },
+            { width: `${fraction * 100}%`, backgroundColor: colors.accentSoft },
           ]}
         />
       </View>
@@ -78,18 +77,18 @@ export default function TreatmentDetailScreen() {
 
   const themed = useMemo(() => ({
     screen: { backgroundColor: colors.background },
-    title: { color: dark ? '#ECEDEE' : '#1A1A1A' },
-    subtitle: { color: dark ? '#9BA1A6' : '#666' },
-    sectionTitle: { color: dark ? '#ECEDEE' : '#1A1A1A' },
-    paragraph: { color: dark ? '#C8C8C8' : '#444' },
-    card: { backgroundColor: dark ? '#1E2022' : '#F8F8F8' },
-    backText: { color: dark ? '#ECEDEE' : '#1A1A1A' },
+    title: { color: colors.text },
+    subtitle: { color: colors.textSecondary },
+    sectionTitle: { color: colors.text },
+    paragraph: { color: colors.textSecondary },
+    card: { backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.cardBorder },
+    backText: { color: colors.text },
     bestSuitedCard: {
-      backgroundColor: dark ? '#1E2A1E' : '#F1F8E9',
-      borderColor: dark ? '#2E7D32' : '#C5E1A5',
+      backgroundColor: colors.successBackground,
+      borderColor: colors.successBorder,
     },
-    bestSuitedLabel: { color: dark ? '#81C784' : '#33691E' },
-    bestSuitedText: { color: dark ? '#C8C8C8' : '#444' },
+    bestSuitedLabel: { color: colors.success },
+    bestSuitedText: { color: colors.textSecondary },
   }), [dark, colors]);
 
   if (!treatment) {
@@ -128,7 +127,7 @@ export default function TreatmentDetailScreen() {
         <View style={[styles.card, themed.card]}>
           <Text style={[styles.sectionTitle, themed.sectionTitle]}>Ratings</Text>
           {treatment.ratings.map((rating) => (
-            <RatingBar key={rating.label} rating={rating} dark={dark} />
+            <RatingBar key={rating.label} rating={rating} colors={colors} />
           ))}
         </View>
 
@@ -210,7 +209,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   card: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 20,
     marginBottom: 28,
   },
@@ -228,7 +227,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   bestSuitedCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 20,
     borderWidth: 1,
   },

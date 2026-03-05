@@ -47,17 +47,17 @@ export default function GalleryScreen() {
 
   const themed = useMemo(() => ({
     container: { backgroundColor: colors.background },
-    heading: { color: dark ? '#ECEDEE' : '#333' },
-    compareChip: { backgroundColor: dark ? '#2A2A2A' : '#f0f0f0' },
-    compareChipText: { color: dark ? '#9BA1A6' : '#555' },
-    cameraIconText: { color: dark ? '#1A1A1A' : '#333' },
+    heading: { color: colors.text },
+    compareChip: { backgroundColor: colors.backgroundTertiary },
+    compareChipText: { color: colors.textSecondary },
+    cameraIconText: { color: colors.textInverse },
     sessionCard: {
-      backgroundColor: dark ? '#1E2022' : '#fafafa',
-      borderColor: dark ? '#333' : '#eee',
+      backgroundColor: colors.cardBackground,
+      borderColor: colors.cardBorder,
     },
-    sessionDate: { color: dark ? '#ECEDEE' : '#333' },
-    deleteButton: { backgroundColor: dark ? '#3A2020' : '#fdeaea' },
-    thumbImage: { backgroundColor: dark ? '#333' : '#e0e0e0' },
+    sessionDate: { color: colors.text },
+    deleteButton: { backgroundColor: colors.errorBackground },
+    thumbImage: { backgroundColor: colors.backgroundTertiary },
   }), [dark, colors]);
 
   const load = useCallback(() => {
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F5D76E',
+    backgroundColor: '#C4A882',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#e74c3c',
+    color: '#D44332',
   },
   sessionDate: {
     fontSize: 16,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   sessionNote: {
     fontSize: 13,
-    color: '#888',
+    color: '#8E8E93',
     marginTop: 4,
   },
 
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   // Empty
   emptyText: {
     fontSize: 14,
-    color: '#888',
+    color: '#8E8E93',
     textAlign: 'center',
     marginTop: 60,
   },

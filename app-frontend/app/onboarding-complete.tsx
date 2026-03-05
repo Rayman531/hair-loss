@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-na
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import React from 'react';
+import { CrownMascot } from '@/components/CrownMascot';
 
 export default function OnboardingCompleteScreen() {
   const router = useRouter();
@@ -15,31 +16,9 @@ export default function OnboardingCompleteScreen() {
       <StatusBar style="dark" />
 
       <View style={styles.content}>
-        {/* Crown mascot with checkmark shield */}
+        {/* Crown mascot — completion state with badge */}
         <View style={styles.mascotSection}>
-          <View style={styles.crownContainer}>
-            {/* Crown peaks */}
-            <View style={styles.crownPeaks}>
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-            </View>
-
-            {/* Crown body */}
-            <View style={styles.crownBody}>
-              <View style={styles.face}>
-                <Text style={styles.eyes}>˘   ˘</Text>
-                <Text style={styles.smile}>⌣</Text>
-              </View>
-            </View>
-
-            {/* Blue shield with checkmark overlay */}
-            <View style={styles.shieldContainer}>
-              <View style={styles.shield}>
-                <Text style={styles.checkmark}>✓</Text>
-              </View>
-            </View>
-          </View>
+          <CrownMascot state="completion" size={130} />
         </View>
 
         {/* Thank you message */}
@@ -73,7 +52,7 @@ export default function OnboardingCompleteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   content: {
     flex: 1,
@@ -87,79 +66,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  crownContainer: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  crownPeaks: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: -8,
-  },
-  peak: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 2,
-    borderColor: '#A89B8C',
-    borderRadius: 12,
-    transform: [{ rotate: '45deg' }],
-  },
-  crownBody: {
-    width: 130,
-    height: 130,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 3,
-    borderColor: '#A89B8C',
-    borderRadius: 65,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  face: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyes: {
-    fontSize: 32,
-    color: '#A89B8C',
-    letterSpacing: 8,
-    marginBottom: 8,
-  },
-  smile: {
-    fontSize: 28,
-    color: '#A89B8C',
-  },
-
-  // Shield overlay
-  shieldContainer: {
-    position: 'absolute',
-    bottom: -5,
-    right: -5,
-  },
-  shield: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#5B9FD7',
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  checkmark: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
 
   // Message section
   messageSection: {
@@ -169,14 +75,14 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     textAlign: 'center',
     lineHeight: 32,
     marginBottom: 16,
   },
   subtext: {
     fontSize: 14,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 8,
@@ -186,12 +92,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   createAccountButton: {
-    backgroundColor: '#000000',
+    backgroundColor: '#C4A882',
     paddingVertical: 18,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,

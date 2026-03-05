@@ -411,7 +411,7 @@ export default function EditRoutineScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   centerContent: {
     flex: 1,
@@ -431,11 +431,11 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   backText: {
     fontSize: 16,
-    color: '#999999',
+    color: '#8E8E93',
     width: 60,
   },
 
@@ -449,23 +449,25 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     paddingTop: 16,
     paddingBottom: 16,
   },
   emptyText: {
     fontSize: 14,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 32,
   },
 
   // Treatment card
   treatmentCard: {
-    backgroundColor: '#F9F7F2',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#EBEBEB',
   },
   treatmentCardHeader: {
     flexDirection: 'row',
@@ -480,11 +482,11 @@ const styles = StyleSheet.create({
   treatmentCardName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   removeText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#D44332',
     fontWeight: '500',
   },
 
@@ -492,8 +494,8 @@ const styles = StyleSheet.create({
   tipContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF9E6',
-    borderRadius: 12,
+    backgroundColor: '#FFF8EF',
+    borderRadius: 14,
     padding: 12,
     marginBottom: 14,
     gap: 10,
@@ -503,7 +505,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
-    color: '#666666',
+    color: '#636366',
     flex: 1,
     lineHeight: 18,
   },
@@ -511,7 +513,7 @@ const styles = StyleSheet.create({
   // Frequency selector
   freqLabel: {
     fontSize: 13,
-    color: '#666666',
+    color: '#636366',
     marginBottom: 8,
   },
   freqRow: {
@@ -522,17 +524,17 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EEEEEE',
     justifyContent: 'center',
     alignItems: 'center',
   },
   freqChipSelected: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#C4A882',
   },
   freqChipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   freqChipTextSelected: {
     color: '#FFFFFF',
@@ -541,7 +543,7 @@ const styles = StyleSheet.create({
   // Add button
   addButton: {
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E5E5',
     borderStyle: 'dashed',
     borderRadius: 16,
     paddingVertical: 18,
@@ -551,14 +553,14 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#666666',
+    color: '#636366',
   },
 
   // Add picker (reusing onboarding styles)
   selectTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     lineHeight: 28,
     paddingTop: 24,
     paddingBottom: 24,
@@ -569,7 +571,7 @@ const styles = StyleSheet.create({
   treatmentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F0DC',
+    backgroundColor: '#F5EDDF',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 16,
@@ -583,11 +585,11 @@ const styles = StyleSheet.create({
   treatmentLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   allSavedText: {
     fontSize: 16,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 40,
   },
@@ -595,10 +597,10 @@ const styles = StyleSheet.create({
   // Error
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#D44332',
     padding: 12,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
+    backgroundColor: '#FDF2F0',
+    borderRadius: 12,
     marginTop: 8,
   },
 
@@ -606,18 +608,18 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   saveButton: {
-    backgroundColor: '#000000',
+    backgroundColor: '#C4A882',
     paddingVertical: 18,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
   },
   saveButtonDisabled: {
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#DDDDDD',
   },
   saveButtonText: {
     color: '#FFFFFF',

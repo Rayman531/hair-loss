@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useEffect } from 'react';
 import React from 'react';
+import { CrownMascot } from '@/components/CrownMascot';
 
 // DEV ONLY: Set to a route like '/onboarding' to skip auth and go directly there
 // Set to null for normal behavior
@@ -70,23 +71,7 @@ export default function WelcomeScreen() {
 
         {/* Crown Mascot */}
         <View style={styles.mascotSection}>
-          <View style={styles.crownContainer}>
-            {/* Crown peaks */}
-            <View style={styles.crownPeaks}>
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-            </View>
-
-            {/* Crown body */}
-            <View style={styles.crownBody}>
-              {/* Face */}
-              <View style={styles.face}>
-                <Text style={styles.eyes}>˘   ˘</Text>
-                <Text style={styles.smile}>⌣</Text>
-              </View>
-            </View>
-          </View>
+          <CrownMascot state="neutral" size={130} />
         </View>
 
         {/* Button Section */}
@@ -157,48 +142,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 40,
-  },
-  crownContainer: {
-    alignItems: 'center',
-  },
-  crownPeaks: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: -8,
-  },
-  peak: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 2,
-    borderColor: '#A89B8C',
-    borderRadius: 12,
-    transform: [{ rotate: '45deg' }],
-  },
-  crownBody: {
-    width: 130,
-    height: 130,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 3,
-    borderColor: '#A89B8C',
-    borderRadius: 65,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  face: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyes: {
-    fontSize: 32,
-    color: '#A89B8C',
-    letterSpacing: 8,
-    marginBottom: 8,
-  },
-  smile: {
-    fontSize: 28,
-    color: '#A89B8C',
   },
 
   // Button Section

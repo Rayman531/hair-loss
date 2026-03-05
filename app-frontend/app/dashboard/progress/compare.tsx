@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import { fetchProgressSessions, ProgressSession, Angle } from '@/lib/api/progress';
 import { ThemedText } from '@/components/themed-text';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 const ANGLE_KEYS: { key: `${Angle}ImageUrl`; label: string }[] = [
   { key: 'frontImageUrl', label: 'Front' },
@@ -32,6 +34,26 @@ function formatDate(iso: string) {
 export default function CompareScreen() {
   const { user } = useUser();
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
+  const themed = useMemo(() => ({
+    container: { backgroundColor: colors.background },
+    dateChip: { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+    dateChipLabel: { color: colors.textTertiary },
+    dateChipValue: { color: colors.text },
+    vsText: { color: colors.textTertiary },
+    angleLabel: { color: colors.textSecondary },
+    imagePlaceholder: { backgroundColor: colors.backgroundTertiary },
+    pickerTitle: { color: colors.text },
+    pickerItem: { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+    pickerItemSelected: { backgroundColor: colors.accentBackground, borderColor: colors.accent },
+    pickerItemText: { color: colors.text },
+    emptyText: { color: colors.textTertiary },
+    backBtn: { backgroundColor: colors.backgroundTertiary },
+    backBtnText: { color: colors.text },
+  }), [colors]);
+
   const [sessions, setSessions] = useState<ProgressSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,26 +85,26 @@ export default function CompareScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.centered, themed.container]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centered}>
-        <ThemedText style={{ color: 'red' }}>{error}</ThemedText>
+      <View style={[styles.centered, themed.container]}>
+        <ThemedText style={{ color: colors.error }}>{error}</ThemedText>
       </View>
     );
   }
 
   if (sessions.length < 2) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.emptyText}>You need at least 2 sessions to compare.</Text>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Back to Gallery</Text>
+      <View style={[styles.centered, themed.container]}>
+        <Text style={[styles.emptyText, themed.emptyText]}>You need at least 2 sessions to compare.</Text>
+        <Pressable style={[styles.backBtn, themed.backBtn]} onPress={() => router.back()}>
+          <Text style={[styles.backBtnText, themed.backBtnText]}>Back to Gallery</Text>
         </Pressable>
       </View>
     );
@@ -94,8 +116,8 @@ export default function CompareScreen() {
   // Session picker overlay
   if (picking) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.pickerTitle}>
+      <View style={[styles.container, themed.container]}>
+        <Text style={[styles.pickerTitle, themed.pickerTitle]}>
           Select {picking === 'left' ? 'Before' : 'After'} session
         </Text>
         <ScrollView contentContainerStyle={styles.pickerList}>
@@ -112,7 +134,8 @@ export default function CompareScreen() {
                 key={s.id}
                 style={[
                   styles.pickerItem,
-                  selected && styles.pickerItemSelected,
+                  themed.pickerItem,
+                  selected && [styles.pickerItemSelected, themed.pickerItemSelected],
                   disabled && styles.pickerItemDisabled,
                 ]}
                 disabled={disabled}
@@ -122,48 +145,48 @@ export default function CompareScreen() {
                   setPicking(null);
                 }}
               >
-                <Text style={[styles.pickerItemText, disabled && { color: '#ccc' }]}>
+                <Text style={[styles.pickerItemText, themed.pickerItemText, disabled && { color: colors.textTertiary }]}>
                   {formatDate(s.createdAt)}
                 </Text>
               </Pressable>
             );
           })}
         </ScrollView>
-        <Pressable style={styles.backBtn} onPress={() => setPicking(null)}>
-          <Text style={styles.backBtnText}>Cancel</Text>
+        <Pressable style={[styles.backBtn, themed.backBtn]} onPress={() => setPicking(null)}>
+          <Text style={[styles.backBtnText, themed.backBtnText]}>Cancel</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, themed.container]} contentContainerStyle={styles.scrollContent}>
       {/* Date selectors */}
       <View style={styles.dateRow}>
-        <Pressable style={styles.dateChip} onPress={() => setPicking('left')}>
-          <Text style={styles.dateChipLabel}>Before</Text>
-          <Text style={styles.dateChipValue}>{formatDate(sessionLeft.createdAt)}</Text>
+        <Pressable style={[styles.dateChip, themed.dateChip]} onPress={() => setPicking('left')}>
+          <Text style={[styles.dateChipLabel, themed.dateChipLabel]}>Before</Text>
+          <Text style={[styles.dateChipValue, themed.dateChipValue]}>{formatDate(sessionLeft.createdAt)}</Text>
         </Pressable>
-        <Text style={styles.vsText}>vs</Text>
-        <Pressable style={styles.dateChip} onPress={() => setPicking('right')}>
-          <Text style={styles.dateChipLabel}>After</Text>
-          <Text style={styles.dateChipValue}>{formatDate(sessionRight.createdAt)}</Text>
+        <Text style={[styles.vsText, themed.vsText]}>vs</Text>
+        <Pressable style={[styles.dateChip, themed.dateChip]} onPress={() => setPicking('right')}>
+          <Text style={[styles.dateChipLabel, themed.dateChipLabel]}>After</Text>
+          <Text style={[styles.dateChipValue, themed.dateChipValue]}>{formatDate(sessionRight.createdAt)}</Text>
         </Pressable>
       </View>
 
       {/* Side-by-side photos per angle */}
       {ANGLE_KEYS.map(({ key, label }) => (
         <View key={key} style={styles.angleRow}>
-          <Text style={styles.angleLabel}>{label}</Text>
+          <Text style={[styles.angleLabel, themed.angleLabel]}>{label}</Text>
           <View style={styles.photoRow}>
-            <Image source={{ uri: sessionLeft[key] }} style={styles.compareImage} />
-            <Image source={{ uri: sessionRight[key] }} style={styles.compareImage} />
+            <Image source={{ uri: sessionLeft[key] }} style={[styles.compareImage, themed.imagePlaceholder]} />
+            <Image source={{ uri: sessionRight[key] }} style={[styles.compareImage, themed.imagePlaceholder]} />
           </View>
         </View>
       ))}
 
-      <Pressable style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backBtnText}>Back to Gallery</Text>
+      <Pressable style={[styles.backBtn, themed.backBtn]} onPress={() => router.back()}>
+        <Text style={[styles.backBtnText, themed.backBtnText]}>Back to Gallery</Text>
       </Pressable>
     </ScrollView>
   );
@@ -172,7 +195,6 @@ export default function CompareScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   centered: {
     flex: 1,
@@ -197,26 +219,21 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#f5f5f5',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   dateChipLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
     marginBottom: 2,
   },
   dateChipValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#333',
   },
   vsText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#bbb',
   },
 
   // Angle comparison rows
@@ -226,7 +243,6 @@ const styles = StyleSheet.create({
   angleLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#555',
     marginBottom: 8,
   },
   photoRow: {
@@ -235,16 +251,14 @@ const styles = StyleSheet.create({
   },
   compareImage: {
     flex: 1,
-    aspectRatio: 1,
-    borderRadius: 10,
-    backgroundColor: '#e0e0e0',
+    aspectRatio: 0.91,
+    borderRadius: 14,
   },
 
   // Session picker
   pickerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
     padding: 20,
     paddingBottom: 12,
   },
@@ -254,42 +268,33 @@ const styles = StyleSheet.create({
   },
   pickerItem: {
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#f5f5f5',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
-  pickerItemSelected: {
-    backgroundColor: '#FFF8E7',
-    borderColor: '#F5D76E',
-  },
+  pickerItemSelected: {},
   pickerItemDisabled: {
     opacity: 0.4,
   },
   pickerItemText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
   },
 
   // Shared
   emptyText: {
     fontSize: 14,
-    color: '#888',
     textAlign: 'center',
     marginBottom: 20,
   },
   backBtn: {
     marginTop: 16,
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    borderRadius: 14,
     alignItems: 'center',
     marginHorizontal: 20,
   },
   backBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
   },
 });

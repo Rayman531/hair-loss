@@ -61,18 +61,58 @@ export default function RoutineTrackerScreen() {
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
 
   const currentMonth = useMemo(() => getCurrentMonth(), []);
+  const [displayMonth, setDisplayMonth] = useState(currentMonth);
 
   const themed = useMemo(() => ({
     screen: { backgroundColor: colors.background },
-    emptyTitle: { color: dark ? '#ECEDEE' : '#1A1A1A' },
+    emptyTitle: { color: colors.text },
     editButton: {
       backgroundColor: colors.background,
-      borderColor: dark ? '#ECEDEE' : '#1A1A1A',
+      borderColor: colors.accent,
     },
-    editButtonText: { color: dark ? '#ECEDEE' : '#1A1A1A' },
+    editButtonText: { color: colors.accent },
   }), [dark, colors]);
+
+  const fetchHeatmap = useCallback(async (month: string) => {
+    if (!userId) return;
+    setHeatmapLoading(true);
+    try {
+      const res = await fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${month}`, {
+        headers: { 'X-User-Id': userId },
+      }).then((r) => r.json());
+      if (res?.success && res.data) {
+        setHeatmap(res.data);
+      }
+    } catch {
+      // keep existing heatmap on error
+    } finally {
+      setHeatmapLoading(false);
+    }
+  }, [userId]);
+
+  const shiftMonth = useCallback((month: string, delta: number): string => {
+    const [y, m] = month.split('-').map(Number);
+    const date = new Date(y, m - 1 + delta, 1);
+    const ny = date.getFullYear();
+    const nm = String(date.getMonth() + 1).padStart(2, '0');
+    return `${ny}-${nm}`;
+  }, []);
+
+  const handlePrevMonth = useCallback(() => {
+    const prev = shiftMonth(displayMonth, -1);
+    setDisplayMonth(prev);
+    fetchHeatmap(prev);
+  }, [displayMonth, shiftMonth, fetchHeatmap]);
+
+  const handleNextMonth = useCallback(() => {
+    if (displayMonth >= currentMonth) return;
+    const next = shiftMonth(displayMonth, 1);
+    setDisplayMonth(next);
+    fetchHeatmap(next);
+  }, [displayMonth, currentMonth, shiftMonth, fetchHeatmap]);
 
   const fetchData = useCallback(async () => {
     if (!userId) return;
@@ -85,7 +125,7 @@ export default function RoutineTrackerScreen() {
     try {
       const [summaryRes, heatmapRes] = await Promise.all([
         fetch(API_ENDPOINTS.TRACKER_SUMMARY, { headers }).then((r) => r.json()),
-        fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${currentMonth}`, { headers })
+        fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${displayMonth}`, { headers })
           .then((r) => r.json())
           .catch(() => null),
       ]);
@@ -104,7 +144,7 @@ export default function RoutineTrackerScreen() {
     } finally {
       setLoading(false);
     }
-  }, [userId, currentMonth]);
+  }, [userId, displayMonth]);
 
   useFocusEffect(
     useCallback(() => {
@@ -116,7 +156,7 @@ export default function RoutineTrackerScreen() {
     return (
       <SafeAreaView style={[styles.screen, themed.screen]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={dark ? '#ECEDEE' : '#1A1A1A'} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </SafeAreaView>
     );
@@ -152,7 +192,13 @@ export default function RoutineTrackerScreen() {
         <WeeklyConsistency treatments={summary.weekly_consistency} />
 
         {heatmap && (
-          <AdherenceCalendar month={heatmap.month} days={heatmap.days} />
+          <AdherenceCalendar
+            month={heatmap.month}
+            days={heatmap.days}
+            onPrevMonth={handlePrevMonth}
+            onNextMonth={handleNextMonth}
+            canGoNext={displayMonth < currentMonth}
+          />
         )}
 
         <TouchableOpacity
@@ -187,7 +233,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: 13,
-    color: '#999999',
+    color: '#8E8E93',
     marginBottom: 4,
   },
   emptyTitle: {
@@ -198,7 +244,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
   },

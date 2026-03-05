@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState } from 'react';
 
@@ -85,6 +86,21 @@ export default function CameraScreen() {
       console.error('Failed to capture photo:', err);
     } finally {
       setCapturing(false);
+    }
+  };
+
+  // --- Pick from gallery ---
+
+  const handlePickFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUri(result.assets[0].uri);
     }
   };
 
@@ -186,6 +202,10 @@ export default function CameraScreen() {
       </CameraView>
 
       <View style={styles.controls}>
+        <Pressable style={styles.galleryButton} onPress={handlePickFromGallery}>
+          <Text style={styles.galleryButtonText}>Gallery</Text>
+        </Pressable>
+
         <Pressable
           style={[styles.captureButton, capturing && styles.captureButtonDisabled]}
           onPress={handleCapture}
@@ -197,6 +217,8 @@ export default function CameraScreen() {
             <View style={styles.captureInner} />
           )}
         </Pressable>
+
+        <View style={styles.galleryButton} />
       </View>
     </View>
   );
@@ -238,14 +260,14 @@ const styles = StyleSheet.create({
   permissionButton: {
     paddingVertical: 14,
     paddingHorizontal: 32,
-    borderRadius: 12,
-    backgroundColor: '#F5D76E',
+    borderRadius: 14,
+    backgroundColor: '#C4A882',
     marginBottom: 16,
   },
   permissionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#FFFFFF',
   },
   backLink: {
     padding: 12,
@@ -277,9 +299,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   controls: {
-    paddingVertical: 28,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
+    paddingVertical: 28,
     backgroundColor: '#000',
+  },
+  galleryButton: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  galleryButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   captureButton: {
     width: 76,
@@ -348,13 +382,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F5D76E',
+    backgroundColor: '#C4A882',
     alignItems: 'center',
   },
   uploadText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#333',
+    color: '#FFFFFF',
   },
 
   // Note
@@ -379,7 +413,7 @@ const styles = StyleSheet.create({
   noteDoneText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F5D76E',
+    color: '#C4A882',
   },
   notePreview: {
     alignSelf: 'flex-start',

@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors, HeatmapColors, Shadows } from '@/constants/theme';
 
 interface HeatmapDay {
   date: string;
@@ -9,31 +11,12 @@ interface HeatmapDay {
 interface AdherenceCalendarProps {
   month: string; // YYYY-MM
   days: HeatmapDay[];
+  onPrevMonth?: () => void;
+  onNextMonth?: () => void;
+  canGoNext?: boolean;
 }
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-// 5-step intensity scale (0 → 4)
-const HEAT_COLORS = [
-  '#F5F5F5', // 0: no adherence
-  '#E8DCC8', // 1: low
-  '#D4C4A0', // 2: moderate
-  '#B8A47A', // 3: good
-  '#1A1A1A', // 4: full
-];
-
-function getHeatColor(ratio: number): string {
-  if (ratio === 0) return HEAT_COLORS[0];
-  if (ratio <= 0.25) return HEAT_COLORS[1];
-  if (ratio <= 0.5) return HEAT_COLORS[2];
-  if (ratio <= 0.75) return HEAT_COLORS[3];
-  return HEAT_COLORS[4];
-}
-
-function getTextColor(ratio: number): string {
-  if (ratio > 0.75) return '#FFFFFF';
-  return '#666666';
-}
 
 function getTodayStr(): string {
   const now = new Date();
@@ -43,11 +26,28 @@ function getTodayStr(): string {
   return `${y}-${m}-${d}`;
 }
 
-export default function AdherenceCalendar({ month, days }: AdherenceCalendarProps) {
+export default function AdherenceCalendar({ month, days, onPrevMonth, onNextMonth, canGoNext = true }: AdherenceCalendarProps) {
   const today = getTodayStr();
+  const colorScheme = useColorScheme();
+  const mode = colorScheme ?? 'light';
+  const colors = Colors[mode];
+  const heatColors = HeatmapColors[mode];
+  const shadows = Shadows[mode];
+
+  const getHeatColor = (ratio: number): string => {
+    if (ratio === 0) return heatColors[0];
+    if (ratio <= 0.25) return heatColors[1];
+    if (ratio <= 0.5) return heatColors[2];
+    if (ratio <= 0.75) return heatColors[3];
+    return heatColors[4];
+  };
+
+  const getTextColor = (ratio: number): string => {
+    if (ratio > 0.75) return mode === 'dark' ? colors.textInverse : '#FFFFFF';
+    return colors.textSecondary;
+  };
 
   const calendarGrid = useMemo(() => {
-    // Build a lookup for completion ratios
     const ratioMap = new Map<string, number>();
     for (const day of days) {
       ratioMap.set(day.date, day.completion_ratio);
@@ -57,19 +57,15 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
     const year = parseInt(yearStr);
     const mon = parseInt(monthStr);
 
-    // First day of month: getDay() → 0=Sun..6=Sat
-    // We want Mon=0..Sun=6
     const firstDate = new Date(year, mon - 1, 1);
     const firstDayOfWeek = firstDate.getDay();
     const mondayOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
     const daysInMonth = new Date(year, mon, 0).getDate();
 
-    // Build weeks
     const weeks: (null | { day: number; dateStr: string; ratio: number })[][] = [];
     let currentWeek: (null | { day: number; dateStr: string; ratio: number })[] = [];
 
-    // Leading empty cells
     for (let i = 0; i < mondayOffset; i++) {
       currentWeek.push(null);
     }
@@ -88,7 +84,6 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
       }
     }
 
-    // Trailing empty cells
     if (currentWeek.length > 0) {
       while (currentWeek.length < 7) {
         currentWeek.push(null);
@@ -99,7 +94,6 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
     return weeks;
   }, [month, days]);
 
-  // Format month label
   const monthLabel = useMemo(() => {
     const [yearStr, monthStr] = month.split('-');
     const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1);
@@ -108,15 +102,31 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Monthly Adherence</Text>
-      <View style={styles.calendarCard}>
-        <Text style={styles.monthLabel}>{monthLabel}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Monthly Adherence</Text>
+      <View style={[
+        styles.calendarCard,
+        { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+        shadows.card,
+      ]}>
+        <View style={styles.monthNav}>
+          <Pressable onPress={onPrevMonth} style={styles.navArrow} hitSlop={8}>
+            <Text style={[styles.navArrowText, { color: colors.text }]}>‹</Text>
+          </Pressable>
+          <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
+          <Pressable
+            onPress={canGoNext ? onNextMonth : undefined}
+            style={[styles.navArrow, !canGoNext && styles.navArrowDisabled]}
+            hitSlop={8}
+          >
+            <Text style={[styles.navArrowText, { color: canGoNext ? colors.text : colors.textTertiary }]}>›</Text>
+          </Pressable>
+        </View>
 
         {/* Day headers */}
         <View style={styles.row}>
           {DAY_LABELS.map((label) => (
             <View key={label} style={styles.cell}>
-              <Text style={styles.dayLabel}>{label}</Text>
+              <Text style={[styles.dayLabel, { color: colors.textTertiary }]}>{label}</Text>
             </View>
           ))}
         </View>
@@ -131,8 +141,8 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
 
               const isFuture = cell.dateStr > today;
               const isToday = cell.dateStr === today;
-              const bgColor = isFuture ? '#FAFAFA' : getHeatColor(cell.ratio);
-              const textColor = isFuture ? '#D0D0D0' : getTextColor(cell.ratio);
+              const bgColor = isFuture ? colors.backgroundTertiary : getHeatColor(cell.ratio);
+              const textColor = isFuture ? colors.textTertiary : getTextColor(cell.ratio);
 
               return (
                 <View key={cellIdx} style={styles.cell}>
@@ -140,7 +150,7 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
                     style={[
                       styles.daySquare,
                       { backgroundColor: bgColor },
-                      isToday && styles.todayBorder,
+                      isToday && { borderWidth: 2, borderColor: colors.todayBorder },
                     ]}
                   >
                     <Text style={[styles.dayNumber, { color: textColor }]}>
@@ -154,12 +164,12 @@ export default function AdherenceCalendar({ month, days }: AdherenceCalendarProp
         ))}
 
         {/* Legend */}
-        <View style={styles.legend}>
-          <Text style={styles.legendLabel}>Less</Text>
-          {HEAT_COLORS.map((color, i) => (
+        <View style={[styles.legend, { borderTopColor: colors.borderLight }]}>
+          <Text style={[styles.legendLabel, { color: colors.textTertiary }]}>Less</Text>
+          {heatColors.map((color, i) => (
             <View key={i} style={[styles.legendSquare, { backgroundColor: color }]} />
           ))}
-          <Text style={styles.legendLabel}>More</Text>
+          <Text style={[styles.legendLabel, { color: colors.textTertiary }]}>More</Text>
         </View>
       </View>
     </View>
@@ -175,27 +185,38 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
     marginBottom: 14,
   },
   calendarCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+  },
+  monthNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  navArrow: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 18,
+  },
+  navArrowDisabled: {
+    opacity: 0.3,
+  },
+  navArrowText: {
+    fontSize: 26,
+    fontWeight: '600',
+    lineHeight: 30,
   },
   monthLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
     textAlign: 'center',
-    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
@@ -211,7 +232,6 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999999',
     textTransform: 'uppercase',
   },
   daySquare: {
@@ -220,10 +240,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  todayBorder: {
-    borderWidth: 2,
-    borderColor: '#A89B8C',
   },
   dayNumber: {
     fontSize: 13,
@@ -237,11 +253,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
   },
   legendLabel: {
     fontSize: 11,
-    color: '#999999',
   },
   legendSquare: {
     width: 16,

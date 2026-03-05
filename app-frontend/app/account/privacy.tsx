@@ -11,8 +11,8 @@ export default function PrivacyPolicyScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={styles.icon}>🔒</Text>
-      <Text style={[styles.title, { color: dark ? '#ECEDEE' : '#1A1A1A' }]}>Privacy Policy</Text>
-      <Text style={styles.message}>Privacy Policy coming soon.</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Privacy Policy</Text>
+      <Text style={[styles.message, { color: colors.textTertiary }]}>Privacy Policy coming soon.</Text>
     </View>
   );
 }
@@ -35,7 +35,6 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    color: '#888',
     textAlign: 'center',
   },
 });

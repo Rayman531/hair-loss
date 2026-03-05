@@ -14,6 +14,7 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '../constants/api';
+import { CrownMascot } from '@/components/CrownMascot';
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -288,16 +289,7 @@ export default function RoutineTrackerSetupScreen() {
               Please select the{'\n'}treatments you would like{'\n'}to track
             </Text>
             {/* Small crown mascot */}
-            <View style={styles.smallCrown}>
-              <View style={styles.smallPeaks}>
-                <View style={styles.smallPeak} />
-                <View style={styles.smallPeak} />
-                <View style={styles.smallPeak} />
-              </View>
-              <View style={styles.smallCrownBody}>
-                <Text style={styles.smallEyes}>˘ ˘</Text>
-              </View>
-            </View>
+            <CrownMascot state="neutral" size={56} />
           </View>
 
           <View style={styles.treatmentList}>
@@ -472,19 +464,7 @@ export default function RoutineTrackerSetupScreen() {
         <View style={styles.centeredContent}>
           {/* Crown mascot */}
           <View style={styles.mascotSection}>
-            <View style={styles.crownContainer}>
-              <View style={styles.crownPeaks}>
-                <View style={styles.peak} />
-                <View style={styles.peak} />
-                <View style={styles.peak} />
-              </View>
-              <View style={styles.crownBody}>
-                <View style={styles.face}>
-                  <Text style={styles.eyes}>˘   ˘</Text>
-                  <Text style={styles.smile}>⌣</Text>
-                </View>
-              </View>
-            </View>
+            <CrownMascot state="neutral" size={130} />
           </View>
 
           <Text style={styles.addMoreHeading}>
@@ -530,19 +510,7 @@ export default function RoutineTrackerSetupScreen() {
       <View style={styles.centeredContent}>
         {/* Crown mascot */}
         <View style={styles.mascotSection}>
-          <View style={styles.crownContainer}>
-            <View style={styles.crownPeaks}>
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-            </View>
-            <View style={styles.crownBody}>
-              <View style={styles.face}>
-                <Text style={styles.eyes}>˘   ˘</Text>
-                <Text style={styles.smile}>⌣</Text>
-              </View>
-            </View>
-          </View>
+          <CrownMascot state="completion" size={130} />
         </View>
 
         <Text style={styles.completeHeading}>You're all set!</Text>
@@ -569,7 +537,7 @@ export default function RoutineTrackerSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   centerContent: {
     flex: 1,
@@ -592,7 +560,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#999999',
+    color: '#8E8E93',
   },
 
   // Scroll
@@ -613,46 +581,12 @@ const styles = StyleSheet.create({
   selectTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     lineHeight: 28,
     flex: 1,
     marginRight: 16,
   },
 
-  // Small crown mascot
-  smallCrown: {
-    alignItems: 'center',
-  },
-  smallPeaks: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    marginBottom: -4,
-  },
-  smallPeak: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 1.5,
-    borderColor: '#A89B8C',
-    borderRadius: 6,
-    transform: [{ rotate: '45deg' }],
-  },
-  smallCrownBody: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 2,
-    borderColor: '#A89B8C',
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  smallEyes: {
-    fontSize: 14,
-    color: '#A89B8C',
-    letterSpacing: 2,
-  },
 
   // Treatment list
   treatmentList: {
@@ -661,7 +595,7 @@ const styles = StyleSheet.create({
   treatmentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F0DC',
+    backgroundColor: '#F5EDDF',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 16,
@@ -669,7 +603,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   treatmentPillSelected: {
-    borderColor: '#1A1A1A',
+    borderColor: '#C4A882',
   },
   treatmentEmoji: {
     fontSize: 22,
@@ -678,11 +612,11 @@ const styles = StyleSheet.create({
   treatmentLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   allSavedText: {
     fontSize: 16,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 40,
   },
@@ -692,7 +626,7 @@ const styles = StyleSheet.create({
   configTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     lineHeight: 30,
     paddingTop: 24,
     paddingBottom: 16,
@@ -700,8 +634,8 @@ const styles = StyleSheet.create({
   tipContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF9E6',
-    borderRadius: 12,
+    backgroundColor: '#FFF8EF',
+    borderRadius: 14,
     padding: 14,
     marginBottom: 20,
     gap: 10,
@@ -711,13 +645,13 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
-    color: '#666666',
+    color: '#636366',
     flex: 1,
     lineHeight: 18,
   },
   sectionLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#636366',
     marginBottom: 14,
   },
 
@@ -732,15 +666,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EEEEEE',
   },
   dayChipSelected: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#C4A882',
   },
   dayChipText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   dayChipTextSelected: {
     color: '#FFFFFF',
@@ -760,24 +694,24 @@ const styles = StyleSheet.create({
   timeInput: {
     width: 72,
     height: 72,
-    backgroundColor: '#F5F0DC',
+    backgroundColor: '#F5EDDF',
     borderRadius: 16,
     fontSize: 32,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
   timeSeparator: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     marginHorizontal: 6,
   },
   periodToggle: {
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E5E5',
   },
   periodButton: {
     paddingVertical: 10,
@@ -785,24 +719,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   periodButtonActive: {
-    backgroundColor: '#F5F0DC',
+    backgroundColor: '#F5EDDF',
   },
   periodText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#999999',
+    color: '#8E8E93',
   },
   periodTextActive: {
-    color: '#1A1A1A',
+    color: '#1C1C1E',
   },
 
   // Error
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#D44332',
     padding: 12,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
+    backgroundColor: '#FDF2F0',
+    borderRadius: 12,
     marginTop: 8,
   },
 
@@ -811,14 +745,14 @@ const styles = StyleSheet.create({
   addMoreHeading: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     textAlign: 'center',
     marginTop: 32,
     marginBottom: 12,
   },
   addMoreSubtext: {
     fontSize: 14,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
@@ -829,14 +763,14 @@ const styles = StyleSheet.create({
   completeHeading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     textAlign: 'center',
     marginTop: 32,
     marginBottom: 12,
   },
   completeSubtext: {
     fontSize: 14,
-    color: '#999999',
+    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
@@ -847,66 +781,24 @@ const styles = StyleSheet.create({
   mascotSection: {
     alignItems: 'center',
   },
-  crownContainer: {
-    alignItems: 'center',
-  },
-  crownPeaks: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: -8,
-  },
-  peak: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 2,
-    borderColor: '#A89B8C',
-    borderRadius: 12,
-    transform: [{ rotate: '45deg' }],
-  },
-  crownBody: {
-    width: 130,
-    height: 130,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 3,
-    borderColor: '#A89B8C',
-    borderRadius: 65,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  face: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyes: {
-    fontSize: 32,
-    color: '#A89B8C',
-    letterSpacing: 8,
-    marginBottom: 8,
-  },
-  smile: {
-    fontSize: 28,
-    color: '#A89B8C',
-  },
 
   // ── Buttons (shared) ────────────────────────
 
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   continueButton: {
-    backgroundColor: '#000000',
+    backgroundColor: '#C4A882',
     paddingVertical: 18,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
   },
   continueButtonDisabled: {
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#DDDDDD',
   },
   continueButtonText: {
     color: '#FFFFFF',
@@ -914,20 +806,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   continueButtonTextDisabled: {
-    color: '#999999',
+    color: '#8E8E93',
   },
   secondaryButton: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 18,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
     borderWidth: 2,
-    borderColor: '#1A1A1A',
+    borderColor: '#C4A882',
   },
   secondaryButtonText: {
-    color: '#1A1A1A',
+    color: '#C4A882',
     fontSize: 16,
     fontWeight: '600',
   },

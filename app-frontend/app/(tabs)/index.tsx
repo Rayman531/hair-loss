@@ -2,6 +2,14 @@ import { StyleSheet, ActivityIndicator, Pressable, ScrollView, View, Text } from
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { useRouter, Link } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
 import {
   fetchDashboard,
@@ -14,8 +22,9 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
+import { Colors, Shadows } from '@/constants/theme';
 import { TREATMENTS } from '@/lib/treatments';
+import { CrownMascot } from '@/components/CrownMascot';
 
 function getTodayDateString(): string {
   const now = new Date();
@@ -71,23 +80,39 @@ export default function DashboardScreen() {
   const today = getTodayDateString();
   const todayMonth = getTodayMonth();
 
+  // Floating animation for crown logo
+  const floatY = useSharedValue(0);
+  useEffect(() => {
+    floatY.value = withRepeat(
+      withSequence(
+        withTiming(-4, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(4, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1, // infinite
+      true,
+    );
+  }, [floatY]);
+  const floatingStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatY.value }],
+  }));
+
+  const shadows = Shadows[colorScheme ?? 'light'];
   const themed = useMemo(() => ({
     screen: { backgroundColor: colors.background },
-    headerLabel: { color: dark ? '#9BA1A6' : '#999' },
-    messageCard: { backgroundColor: dark ? '#2A2520' : '#FFF8E7' },
-    messageText: { color: dark ? '#D4C4A0' : '#444' },
-    routineCard: { backgroundColor: dark ? '#2A2520' : '#FFF8E7' },
-    routineTitle: { color: dark ? '#ECEDEE' : '#333' },
-    routineText: { color: dark ? '#D4C4A0' : '#444' },
-    bullet: { color: dark ? '#ECEDEE' : '#333' },
-    checkboxLabel: { color: dark ? '#ECEDEE' : '#333' },
-    completionSummary: { color: dark ? '#9BA1A6' : '#999' },
-    productName: { color: dark ? '#9BA1A6' : '#555' },
-    progressCard: { backgroundColor: dark ? '#3A3420' : '#F5D76E' },
-    progressTitle: { color: dark ? '#ECEDEE' : '#333' },
-    progressSub: { color: dark ? '#9BA1A6' : '#555' },
-    progressArrow: { color: dark ? '#ECEDEE' : '#333' },
-  }), [dark, colors]);
+    headerLabel: { color: colors.textTertiary },
+    messageCard: { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder, ...shadows.card },
+    messageText: { color: colors.textSecondary },
+    routineTitle: { color: colors.text },
+    routineText: { color: colors.textSecondary },
+    treatmentCard: { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder, ...shadows.card },
+    checkboxLabel: { color: colors.text },
+    completionSummary: { color: colors.textTertiary },
+    productName: { color: colors.textSecondary },
+    progressCard: { backgroundColor: colors.accentSurface, ...shadows.card },
+    progressTitle: { color: colors.text },
+    progressSub: { color: colors.textSecondary },
+    progressArrow: { color: colors.text },
+  }), [dark, colors, shadows]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -194,52 +219,55 @@ export default function DashboardScreen() {
       {/* Motivational message */}
       {data?.motivationalMessage && (
         <View style={[styles.messageCard, themed.messageCard]}>
-          <Text style={styles.messageEmoji}>👑</Text>
+          <Animated.View style={floatingStyle}>
+            <CrownMascot state="neutral" size={48} />
+          </Animated.View>
           <Text style={[styles.messageText, themed.messageText]}>{data.motivationalMessage}</Text>
         </View>
       )}
 
       {/* Today's Routine */}
-      <View style={[styles.routineCard, themed.routineCard]}>
-        <Text style={[styles.routineTitle, themed.routineTitle]}>Today's Routine</Text>
-        {trackerTreatments.length > 0 ? (
-          <>
-            {trackerTreatments.map((t) => {
-              const done = completedIds.has(t.id);
-              const toggling = togglingIds.has(t.id);
-              return (
-                <Pressable
-                  key={t.id}
-                  style={styles.checkboxRow}
-                  onPress={() => handleToggle(t.id)}
-                  disabled={toggling}
-                >
-                  <View style={[styles.checkbox, done && styles.checkboxChecked]}>
-                    {done && <Text style={styles.checkmark}>✓</Text>}
-                  </View>
-                  <Text style={[styles.checkboxLabel, themed.checkboxLabel, done && styles.checkboxLabelDone]}>
-                    {t.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-            <Text style={[styles.completionSummary, themed.completionSummary]}>
-              {completedIds.size} of {trackerTreatments.length} completed
-            </Text>
-          </>
-        ) : data?.todaysTreatments && data.todaysTreatments.length > 0 ? (
-          data.todaysTreatments.map((t) => (
-            <View key={t.id} style={styles.routineItem}>
-              <Text style={[styles.bullet, themed.bullet]}>{'\u2022'}</Text>
-              <Text style={[styles.routineText, themed.routineText]}>
+      <Text style={[styles.routineTitle, themed.routineTitle]}>Today's Routine</Text>
+      {trackerTreatments.length > 0 ? (
+        <View style={styles.routineList}>
+          {trackerTreatments.map((t) => {
+            const done = completedIds.has(t.id);
+            const toggling = togglingIds.has(t.id);
+            return (
+              <Pressable
+                key={t.id}
+                style={[styles.treatmentCard, themed.treatmentCard]}
+                onPress={() => handleToggle(t.id)}
+                disabled={toggling}
+              >
+                <View style={[styles.checkbox, done && styles.checkboxChecked]}>
+                  {done && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={[styles.checkboxLabel, themed.checkboxLabel, done && styles.checkboxLabelDone]}>
+                  {t.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Text style={[styles.completionSummary, themed.completionSummary]}>
+            {completedIds.size} of {trackerTreatments.length} completed
+          </Text>
+        </View>
+      ) : data?.todaysTreatments && data.todaysTreatments.length > 0 ? (
+        <View style={styles.routineList}>
+          {data.todaysTreatments.map((t) => (
+            <View key={t.id} style={[styles.treatmentCard, themed.treatmentCard]}>
+              <Text style={[styles.checkboxLabel, themed.checkboxLabel]}>
                 {TREATMENT_LABELS[t.treatmentType] ?? t.treatmentType}
               </Text>
             </View>
-          ))
-        ) : (
+          ))}
+        </View>
+      ) : (
+        <View style={[styles.treatmentCard, themed.treatmentCard]}>
           <Text style={[styles.routineText, themed.routineText]}>No treatments scheduled today.</Text>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Explore Products */}
       <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -257,7 +285,11 @@ export default function DashboardScreen() {
             onPress={() => router.push(`/treatments/${treatment.id}` as any)}
           >
             <View style={[styles.productIcon, { backgroundColor: treatment.color }]}>
-              <Text style={styles.productEmoji}>{treatment.emoji}</Text>
+              {treatment.icon ? (
+                <treatment.icon size={treatment.iconSize ?? 36} />
+              ) : (
+                <Text style={styles.productEmoji}>{treatment.emoji}</Text>
+              )}
             </View>
             <Text style={[styles.productName, themed.productName]}>{treatment.name}</Text>
           </Pressable>
@@ -331,14 +363,14 @@ const styles = StyleSheet.create({
   },
   messageCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 14,
+    borderWidth: 1,
     marginBottom: 24,
   },
-  messageEmoji: {
-    fontSize: 28,
+  messageLogo: {
     marginTop: 2,
   },
   messageText: {
@@ -346,47 +378,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
-  routineCard: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 28,
-  },
   routineTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  routineItem: {
+  routineList: {
+    gap: 10,
+    marginBottom: 28,
+  },
+  treatmentCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 3,
-  },
-  bullet: {
-    fontSize: 18,
+    gap: 12,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   routineText: {
     fontSize: 15,
   },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-  },
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#CCC',
+    borderColor: '#C8C8C8',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8F8F8',
   },
   checkboxChecked: {
-    backgroundColor: '#34C759',
-    borderColor: '#34C759',
+    backgroundColor: '#3BAF5C',
+    borderColor: '#3BAF5C',
   },
   checkmark: {
     color: '#FFF',
@@ -399,7 +423,7 @@ const styles = StyleSheet.create({
   },
   checkboxLabelDone: {
     textDecorationLine: 'line-through',
-    color: '#999',
+    color: '#8E8E93',
   },
   completionSummary: {
     fontSize: 13,
@@ -457,29 +481,29 @@ const styles = StyleSheet.create({
   devMenu: {
     marginTop: 30,
     padding: 15,
-    backgroundColor: '#fff3cd',
-    borderRadius: 10,
+    backgroundColor: '#FFF9EC',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#ffc107',
+    borderColor: '#E5B94E',
   },
   devTitle: {
     fontWeight: 'bold',
     fontSize: 16,
     marginBottom: 10,
-    color: '#856404',
+    color: '#7A6520',
   },
   devLink: {
     paddingVertical: 8,
   },
   devLinkText: {
-    color: '#856404',
+    color: '#7A6520',
     fontSize: 14,
   },
   signOutBtn: {
     marginTop: 15,
-    backgroundColor: '#dc3545',
+    backgroundColor: '#D44332',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 14,
     alignItems: 'center',
   },
   signOutText: {

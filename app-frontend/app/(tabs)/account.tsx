@@ -33,25 +33,25 @@ export default function AccountScreen() {
 
   const themed = useMemo(() => ({
     screen: { backgroundColor: colors.background },
-    title: { color: dark ? '#ECEDEE' : '#1A1A1A' },
-    card: { backgroundColor: dark ? '#1E2022' : '#FAFAFA' },
-    userName: { color: dark ? '#ECEDEE' : '#1A1A1A' },
-    rowLabel: { color: dark ? '#ECEDEE' : '#1A1A1A' },
-    detailValue: { color: dark ? '#ECEDEE' : '#1A1A1A' },
-    divider: { backgroundColor: dark ? '#333' : '#E0E0E0' },
-    detailBorder: { borderTopColor: dark ? '#333' : '#E0E0E0' },
-    signOutBtn: { backgroundColor: dark ? '#1E2022' : '#FAFAFA' },
+    title: { color: colors.text },
+    card: { backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.cardBorder },
+    userName: { color: colors.text },
+    rowLabel: { color: colors.text },
+    detailValue: { color: colors.text },
+    divider: { backgroundColor: colors.divider },
+    detailBorder: { borderTopColor: colors.divider },
+    signOutBtn: { backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.cardBorder },
     modalBg: { backgroundColor: colors.background },
-    modalTitle: { color: dark ? '#ECEDEE' : '#1A1A1A' },
+    modalTitle: { color: colors.text },
     textArea: {
-      backgroundColor: dark ? '#1E2022' : '#FAFAFA',
-      borderColor: dark ? '#333' : '#E0E0E0',
-      color: dark ? '#ECEDEE' : '#1A1A1A',
+      backgroundColor: colors.backgroundTertiary,
+      borderColor: colors.border,
+      color: colors.text,
     },
-    submitBtn: { backgroundColor: dark ? '#ECEDEE' : '#1A1A1A' },
-    submitBtnText: { color: dark ? '#1A1A1A' : '#fff' },
-    avatar: { backgroundColor: dark ? '#ECEDEE' : '#1A1A1A' },
-    avatarText: { color: dark ? '#1A1A1A' : '#fff' },
+    submitBtn: { backgroundColor: colors.accent },
+    submitBtnText: { color: colors.textInverse },
+    avatar: { backgroundColor: colors.accent },
+    avatarText: { color: colors.textInverse },
   }), [dark, colors]);
 
   const handleSubmitFeedback = () => {
@@ -118,7 +118,7 @@ export default function AccountScreen() {
             <Switch
               value={isDarkMode}
               onValueChange={toggleDarkMode}
-              trackColor={{ false: '#E0E0E0', true: dark ? '#555' : '#1A1A1A' }}
+              trackColor={{ false: colors.switchTrackOff, true: colors.switchTrackOn }}
               thumbColor="#fff"
             />
           </View>
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: 13,
-    color: '#999',
+    color: '#8E8E93',
     marginBottom: 12,
   },
   title: {
@@ -232,14 +232,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#999',
+    color: '#8E8E93',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
     marginLeft: 4,
   },
   card: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
   },
   avatarRow: {
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 14,
-    color: '#888',
+    color: '#8E8E93',
   },
   detailRow: {
     flexDirection: 'row',
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#888',
+    color: '#8E8E93',
   },
   detailValue: {
     fontSize: 14,
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
   rowChevron: {
     fontSize: 22,
-    color: '#CCC',
+    color: '#C8C8C8',
     fontWeight: '300',
   },
   rowDivider: {
@@ -310,12 +310,12 @@ const styles = StyleSheet.create({
   signOutBtn: {
     marginTop: 8,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
   },
   signOutText: {
     fontSize: 16,
-    color: '#e74c3c',
+    color: '#D44332',
     fontWeight: '600',
   },
   modalContainer: {
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     fontSize: 16,
-    color: '#0a7ea4',
+    color: '#C4A882',
   },
   textArea: {
     flex: 1,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     paddingVertical: 16,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     marginBottom: 20,
   },

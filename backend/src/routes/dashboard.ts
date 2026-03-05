@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../db/drizzle';
-import { userRoutines } from '../db/schema';
+import { userRoutines, progressSessions } from '../db/schema';
 import { eq, asc } from 'drizzle-orm';
 
 type Env = {
@@ -23,16 +23,15 @@ function getTodaysTreatments(routines: Routine[]): Routine[] {
 }
 
 const MOTIVATIONAL_MESSAGES = [
-  'Consistency is the key to results. Keep going!',
-  'Every treatment brings you one step closer to your goal.',
-  'Small daily actions lead to big transformations.',
-  'Your future self will thank you for showing up today.',
-  'Progress takes patience — trust the process.',
-  'You are doing something great for yourself. Stay committed.',
-  'One day at a time. You have got this!',
-  'Healthy habits today, visible results tomorrow.',
-  'Showing up is half the battle — and you are here.',
-  'Your dedication is your superpower. Keep it up!',
+  'Male pattern baldness is extremely common — by age 50, ~50% of men are affected, so you\'re not alone in this.',
+  'Minoxidil can regrow and thicken miniaturized hairs in many users — consistency is key.',
+  'The "Big 4" (finasteride, minoxidil, ketoconazole, microneedling) covers the major mechanisms behind AGA.',
+  'Early intervention dramatically improves outcomes — starting now is scientifically smarter than waiting.',
+  'Hair follicles in AGA shrink (miniaturize) before they die, meaning many are still recoverable.',
+  'Progress pics show real reversals when you stay consistent.',
+  'Research on next-gen treatments (e.g., pyrilutamide, GT20029) is ongoing — innovation hasn\'t stopped!',
+  'Most hair loss is genetic and hormonal — not your fault, not from wearing hats or shampoo.',
+  'A simple daily routine (5 minutes morning and night) can biologically change your hair\'s trajectory over months.',
 ] as const;
 
 function getMotivationalMessage(): string {
@@ -58,17 +57,26 @@ dashboard.get('/', async (c) => {
     const db = createDrizzleConnection(c.env.DATABASE_URL);
     const userId = c.get('userId');
 
-    const routines = await db
-      .select()
-      .from(userRoutines)
-      .where(eq(userRoutines.userId, userId))
-      .orderBy(asc(userRoutines.createdAt));
+    const [routines, progressPhotos] = await Promise.all([
+      db
+        .select()
+        .from(userRoutines)
+        .where(eq(userRoutines.userId, userId))
+        .orderBy(asc(userRoutines.createdAt)),
+      db
+        .select({ id: progressSessions.id })
+        .from(progressSessions)
+        .where(eq(progressSessions.userId, userId))
+        .limit(1),
+    ]);
 
     const todaysTreatments = getTodaysTreatments(routines);
 
     const motivationalMessage = getMotivationalMessage();
 
-    return c.json({ success: true, data: { routines, todaysTreatments, motivationalMessage } });
+    const progressTrackerInitialized = progressPhotos.length > 0;
+
+    return c.json({ success: true, data: { routines, todaysTreatments, motivationalMessage, progressTrackerInitialized } });
   } catch (error) {
     console.error('Error fetching dashboard:', error);
     return c.json({

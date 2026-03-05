@@ -206,7 +206,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   keyboardView: {
     flex: 1,
@@ -222,22 +222,22 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     marginBottom: 8,
   },
   subtext: {
     fontSize: 16,
-    color: '#666666',
+    color: '#636366',
     marginBottom: 32,
     lineHeight: 22,
   },
   errorText: {
     fontSize: 14,
-    color: '#DC2626',
+    color: '#D44332',
     marginBottom: 16,
     padding: 12,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
+    backgroundColor: '#FDF2F0',
+    borderRadius: 12,
   },
   nameRow: {
     flexDirection: 'row',
@@ -252,34 +252,34 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     borderWidth: 1,
     borderColor: '#E5E5E5',
   },
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   button: {
-    backgroundColor: '#000000',
+    backgroundColor: '#C4A882',
     paddingVertical: 18,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
   },
   buttonDisabled: {
-    backgroundColor: '#666666',
+    backgroundColor: '#C8C8C8',
   },
   buttonText: {
     color: '#FFFFFF',

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import { useRouter } from 'expo-router';
 import { API_ENDPOINTS, API_BASE_URL } from '../constants/api';
+import { CrownMascot } from '@/components/CrownMascot';
 
 // Types matching backend API
 interface QuestionOption {
@@ -126,24 +127,12 @@ export default function OnboardingScreen() {
           </Text>
         </View>
 
-        {/* Crown mascot */}
+        {/* Crown mascot — encouraging when an option is selected */}
         <View style={styles.mascotSection}>
-          <View style={styles.crownContainer}>
-            {/* Crown peaks */}
-            <View style={styles.crownPeaks}>
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-              <View style={styles.peak} />
-            </View>
-
-            {/* Crown body */}
-            <View style={styles.crownBody}>
-              <View style={styles.face}>
-                <Text style={styles.eyes}>˘   ˘</Text>
-                <Text style={styles.smile}>⌣</Text>
-              </View>
-            </View>
-          </View>
+          <CrownMascot
+            state={selectedOptionId !== null ? 'encouraging' : 'neutral'}
+            size={110}
+          />
         </View>
 
         {/* Question */}
@@ -203,7 +192,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAF8',
+    backgroundColor: '#F8F8F8',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -223,56 +212,14 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#636366',
     fontWeight: '400',
   },
 
   // Mascot
   mascotSection: {
     alignItems: 'center',
-    paddingVertical: 30,
-  },
-  crownContainer: {
-    alignItems: 'center',
-  },
-  crownPeaks: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: -8,
-  },
-  peak: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 2,
-    borderColor: '#A89B8C',
-    borderRadius: 12,
-    transform: [{ rotate: '45deg' }],
-  },
-  crownBody: {
-    width: 130,
-    height: 130,
-    backgroundColor: '#F5F1E8',
-    borderWidth: 3,
-    borderColor: '#A89B8C',
-    borderRadius: 65,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  face: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyes: {
-    fontSize: 32,
-    color: '#A89B8C',
-    letterSpacing: 8,
-    marginBottom: 8,
-  },
-  smile: {
-    fontSize: 28,
-    color: '#A89B8C',
+    paddingVertical: 24,
   },
 
   // Question
@@ -282,7 +229,7 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     textAlign: 'left',
     lineHeight: 30,
   },
@@ -293,19 +240,19 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   optionButton: {
-    backgroundColor: '#E8E8E8',
+    backgroundColor: '#EEEEEE',
     paddingVertical: 18,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 14,
     minHeight: 56,
     justifyContent: 'center',
   },
   optionButtonSelected: {
-    backgroundColor: '#4A4A4A',
+    backgroundColor: '#C4A882',
   },
   optionText: {
     fontSize: 16,
-    color: '#1A1A1A',
+    color: '#1C1C1E',
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -321,20 +268,20 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#FAFAF8',
+    backgroundColor: '#F8F8F8',
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: '#E8E8E8',
   },
   continueButton: {
-    backgroundColor: '#000000',
+    backgroundColor: '#C4A882',
     paddingVertical: 18,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
   },
   continueButtonDisabled: {
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#DDDDDD',
   },
   continueButtonText: {
     color: '#FFFFFF',
@@ -342,13 +289,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   continueButtonTextDisabled: {
-    color: '#999999',
+    color: '#8E8E93',
   },
 
   // Error
   errorText: {
     fontSize: 16,
-    color: '#666666',
+    color: '#636366',
     textAlign: 'center',
   },
 });

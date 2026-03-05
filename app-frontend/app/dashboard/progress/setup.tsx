@@ -9,11 +9,17 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import { Angle, ALL_ANGLES, uploadProgressSession } from '@/lib/api/progress';
 import type { CapturedPhoto } from '@/lib/api/progress';
 import { useProgressSession } from './_context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
+import { FrontViewIcon } from '@/components/icons/FrontViewIcon';
+import { TopViewIcon } from '@/components/icons/TopViewIcon';
+import { RightViewIcon } from '@/components/icons/RightViewIcon';
+import { LeftViewIcon } from '@/components/icons/LeftViewIcon';
 
 type AngleConfig = {
   label: string;
@@ -33,6 +39,23 @@ export default function SetupScreen() {
   const { photos, reset } = useProgressSession();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
+  const themed = useMemo(() => ({
+    screen: { backgroundColor: colors.background },
+    heading: { color: colors.text },
+    subheading: { color: colors.textTertiary },
+    angleCard: { backgroundColor: colors.accentBackground },
+    angleCardDone: { backgroundColor: colors.backgroundTertiary },
+    angleLabel: { color: colors.text },
+    angleLabelDone: { color: colors.textTertiary },
+    placeholderBg: { backgroundColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.6)' },
+    progressText: { color: colors.textTertiary },
+    errorBox: { backgroundColor: colors.errorBackground, borderColor: colors.errorBorder },
+    errorText: { color: colors.error },
+    continueButton: { backgroundColor: colors.accent },
+  }), [colors, colorScheme]);
 
   const completedCount = ALL_ANGLES.filter((a) => photos[a]).length;
   const allDone = completedCount === 4;
@@ -77,11 +100,11 @@ export default function SetupScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.heading}>
+    <ScrollView style={[styles.screen, themed.screen]} contentContainerStyle={styles.content}>
+      <Text style={[styles.heading, themed.heading]}>
         Setup your Progress Tracker{'\n'}by taking baseline photos
       </Text>
-      <Text style={styles.subheading}>
+      <Text style={[styles.subheading, themed.subheading]}>
         These will serve as a reference as you{'\n'}progress with your hair loss journey
       </Text>
 
@@ -94,11 +117,11 @@ export default function SetupScreen() {
           return (
             <Pressable
               key={angle}
-              style={[styles.angleCard, done && styles.angleCardDone]}
+              style={[styles.angleCard, themed.angleCard, done && [styles.angleCardDone, themed.angleCardDone]]}
               onPress={() => handleAnglePress(angle)}
             >
               <View style={styles.angleTextCol}>
-                <Text style={[styles.angleLabel, done && styles.angleLabelDone]}>
+                <Text style={[styles.angleLabel, themed.angleLabel, done && [styles.angleLabelDone, themed.angleLabelDone]]}>
                   {config.label} ({config.subtitle})
                 </Text>
                 {done && <Text style={styles.checkmark}>Completed</Text>}
@@ -107,10 +130,11 @@ export default function SetupScreen() {
               {done && photo ? (
                 <Image source={{ uri: photo.uri }} style={styles.angleThumbnail} />
               ) : (
-                <View style={styles.anglePlaceholder}>
-                  <Text style={styles.placeholderText}>
-                    {angle === 'front' ? '🧑' : angle === 'top' ? '🔝' : angle === 'right' ? '➡️' : '⬅️'}
-                  </Text>
+                <View style={[styles.anglePlaceholder, themed.placeholderBg]}>
+                  {angle === 'front' && <FrontViewIcon size={52} color={colors.textSecondary} />}
+                  {angle === 'top' && <TopViewIcon size={52} color={colors.textSecondary} />}
+                  {angle === 'right' && <RightViewIcon size={52} color={colors.textSecondary} />}
+                  {angle === 'left' && <LeftViewIcon size={52} color={colors.textSecondary} />}
                 </View>
               )}
             </Pressable>
@@ -118,27 +142,27 @@ export default function SetupScreen() {
         })}
       </View>
 
-      <Text style={styles.progressText}>
+      <Text style={[styles.progressText, themed.progressText]}>
         {completedCount}/4 photos captured
       </Text>
 
       {uploadError && (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{uploadError}</Text>
+        <View style={[styles.errorBox, themed.errorBox]}>
+          <Text style={[styles.errorText, themed.errorText]}>{uploadError}</Text>
           <Pressable onPress={() => setUploadError(null)}>
-            <Text style={styles.errorDismiss}>Dismiss</Text>
+            <Text style={[styles.errorDismiss, themed.errorText]}>Dismiss</Text>
           </Pressable>
         </View>
       )}
 
       {allDone && (
         <Pressable
-          style={[styles.continueButton, uploading && styles.continueButtonDisabled]}
+          style={[styles.continueButton, themed.continueButton, uploading && styles.continueButtonDisabled]}
           onPress={handleUploadAll}
           disabled={uploading}
         >
           {uploading ? (
-            <ActivityIndicator size="small" color="#333" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text style={styles.continueButtonText}>Continue to Gallery</Text>
           )}
@@ -151,7 +175,6 @@ export default function SetupScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   content: {
     padding: 24,
@@ -161,13 +184,11 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#222',
     lineHeight: 32,
     marginBottom: 12,
   },
   subheading: {
     fontSize: 14,
-    color: '#999',
     lineHeight: 20,
     marginBottom: 32,
   },
@@ -180,10 +201,8 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     paddingHorizontal: 20,
     borderRadius: 16,
-    backgroundColor: '#FFF8E7',
   },
   angleCardDone: {
-    backgroundColor: '#EDEDED',
     opacity: 0.6,
   },
   angleTextCol: {
@@ -192,11 +211,8 @@ const styles = StyleSheet.create({
   angleLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
   },
-  angleLabelDone: {
-    color: '#999',
-  },
+  angleLabelDone: {},
   checkmark: {
     fontSize: 13,
     color: '#81C784',
@@ -213,7 +229,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
@@ -223,17 +238,14 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 13,
-    color: '#999',
     textAlign: 'center',
     marginTop: 20,
   },
   errorBox: {
     marginTop: 16,
     padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#FFF0F0',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#FFD0D0',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -241,19 +253,16 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     fontSize: 13,
-    color: '#C62828',
   },
   errorDismiss: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#C62828',
     marginLeft: 12,
   },
   continueButton: {
     marginTop: 16,
     paddingVertical: 16,
     borderRadius: 14,
-    backgroundColor: '#F5D76E',
     alignItems: 'center',
   },
   continueButtonDisabled: {
@@ -262,6 +271,6 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#333',
+    color: '#FFFFFF',
   },
 });

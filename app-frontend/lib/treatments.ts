@@ -1,3 +1,12 @@
+import React from 'react';
+import { FinasterideIcon } from '@/components/icons/FinasterideIcon';
+import { MinoxidilIcon } from '@/components/icons/MinoxidilIcon';
+import { MicroneedlingIcon } from '@/components/icons/MicroneedlingIcon';
+import { KetoconazoleIcon } from '@/components/icons/KetoconazoleIcon';
+import { PumpkinSeedOilIcon } from '@/components/icons/PumpkinSeedOilIcon';
+import { RosemaryOilIcon } from '@/components/icons/RosemaryOilIcon';
+import { ScalpMassagerIcon } from '@/components/icons/ScalpMassagerIcon';
+
 export interface TreatmentRating {
   label: string;
   value: string;
@@ -14,6 +23,10 @@ export interface Treatment {
   ratings: TreatmentRating[];
   description: string[];
   bestSuitedFor: string;
+  /** Optional SVG icon component rendered instead of emoji on the dashboard */
+  icon?: React.ComponentType<{ size?: number }>;
+  /** Custom icon size on the dashboard (default 36) */
+  iconSize?: number;
 }
 
 export const TREATMENTS: Treatment[] = [
@@ -21,7 +34,8 @@ export const TREATMENTS: Treatment[] = [
     id: 'finasteride',
     name: 'Finasteride',
     emoji: '💊',
-    color: '#FFF3E0',
+    icon: FinasterideIcon,
+    color: '#FFF0E0',
     subtitle: 'Oral - Direct DHT Suppression',
     ratings: [
       { label: 'Effectiveness', value: '9/10', numericValue: 9, maxValue: 10 },
@@ -40,7 +54,9 @@ export const TREATMENTS: Treatment[] = [
     id: 'minoxidil',
     name: 'Minoxidil',
     emoji: '💧',
-    color: '#E3F2FD',
+    icon: MinoxidilIcon,
+    iconSize: 45,
+    color: '#E8F0FB',
     subtitle: 'Topical or Oral - Growth Stimulation',
     ratings: [
       { label: 'Effectiveness', value: '8/10', numericValue: 8, maxValue: 10 },
@@ -59,7 +75,9 @@ export const TREATMENTS: Treatment[] = [
     id: 'microneedling',
     name: 'Microneedling',
     emoji: '🪡',
-    color: '#F3E5F5',
+    icon: MicroneedlingIcon,
+    iconSize: 52,
+    color: '#F0E8F5',
     subtitle: 'Wound Healing + Growth Factor Activation',
     ratings: [
       { label: 'Effectiveness', value: '7.5\u20139/10', numericValue: 8.25, maxValue: 10 },
@@ -78,7 +96,8 @@ export const TREATMENTS: Treatment[] = [
     id: 'ketoconazole',
     name: 'Ketoconazole',
     emoji: '🧴',
-    color: '#E8F5E9',
+    icon: KetoconazoleIcon,
+    color: '#E8F2EC',
     subtitle: 'Nizoral Shampoo - Anti-Androgen + Anti-Inflammatory',
     ratings: [
       { label: 'Effectiveness', value: '5.5/10', numericValue: 5.5, maxValue: 10 },
@@ -96,7 +115,8 @@ export const TREATMENTS: Treatment[] = [
     id: 'rosemary-oil',
     name: 'Rosemary Oil',
     emoji: '🌿',
-    color: '#E8F5E9',
+    icon: RosemaryOilIcon,
+    color: '#E8F2EC',
     subtitle: 'Mild Growth Stimulation + Anti-Inflammatory',
     ratings: [
       { label: 'Effectiveness', value: '4.5/10', numericValue: 4.5, maxValue: 10 },
@@ -115,7 +135,8 @@ export const TREATMENTS: Treatment[] = [
     id: 'pumpkin-seed-oil',
     name: 'Pumpkin Seed Oil',
     emoji: '🎃',
-    color: '#FFF8E1',
+    icon: PumpkinSeedOilIcon,
+    color: '#FFF6E3',
     subtitle: 'Mild 5-Alpha Reductase Inhibition',
     ratings: [
       { label: 'Effectiveness', value: '4/10', numericValue: 4, maxValue: 10 },
@@ -133,7 +154,8 @@ export const TREATMENTS: Treatment[] = [
     id: 'scalp-massagers',
     name: 'Scalp Massagers',
     emoji: '✋',
-    color: '#FCE4EC',
+    icon: ScalpMassagerIcon,
+    color: '#FCE8EE',
     subtitle: 'Mechanical Stimulation + Increased Blood Flow',
     ratings: [
       { label: 'Effectiveness', value: '3\u20135/10', numericValue: 4, maxValue: 10 },
