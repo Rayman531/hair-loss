@@ -13,8 +13,10 @@ import {
   Switch,
 } from 'react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
+import { API_ENDPOINTS } from '@/constants/api';
 import { useRouter } from 'expo-router';
 import React, { useState, useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
 
@@ -26,6 +28,7 @@ export default function AccountScreen() {
   const { isDarkMode, colorScheme, toggleDarkMode } = useThemeContext();
   const dark = colorScheme === 'dark';
   const colors = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
@@ -54,15 +57,27 @@ export default function AccountScreen() {
     avatarText: { color: colors.textInverse },
   }), [dark, colors]);
 
-  const handleSubmitFeedback = () => {
+  const handleSubmitFeedback = async () => {
     if (!feedbackText.trim()) return;
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      const res = await fetch(API_ENDPOINTS.FEEDBACK, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user?.id ?? '',
+        },
+        body: JSON.stringify({ message: feedbackText.trim() }),
+      });
+      if (!res.ok) throw new Error('Failed to submit feedback');
       setFeedbackText('');
       setFeedbackVisible(false);
       Alert.alert('Thank you!', 'Your feedback has been submitted successfully.');
-    }, 600);
+    } catch {
+      Alert.alert('Error', 'Failed to submit feedback. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCustomerSupport = () => {
@@ -70,7 +85,7 @@ export default function AccountScreen() {
   };
 
   return (
-    <ScrollView style={[styles.screen, themed.screen]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.screen, themed.screen]} contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
       <Text style={styles.headerLabel}>Account</Text>
       <Text style={[styles.title, themed.title]}>Settings</Text>
 
@@ -213,7 +228,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 56,
     paddingBottom: 40,
   },
   headerLabel: {

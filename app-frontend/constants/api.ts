@@ -54,4 +54,5 @@ export const API_ENDPOINTS = {
 
   TRACKER_SUMMARY: `${API_BASE_URL}/api/tracker/summary`,
   TRACKER_HEATMAP: `${API_BASE_URL}/api/tracker/heatmap`,
+  FEEDBACK: `${API_BASE_URL}/api/feedback`,
 };

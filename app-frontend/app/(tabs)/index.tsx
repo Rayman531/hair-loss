@@ -1,4 +1,4 @@
-import { StyleSheet, ActivityIndicator, Pressable, ScrollView, View, Text } from 'react-native';
+import { StyleSheet, ActivityIndicator, Pressable, ScrollView, View, Text, SafeAreaView } from 'react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { useRouter, Link } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -25,6 +25,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Shadows } from '@/constants/theme';
 import { TREATMENTS } from '@/lib/treatments';
 import { CrownMascot } from '@/components/CrownMascot';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function getTodayDateString(): string {
   const now = new Date();
@@ -72,6 +73,8 @@ export default function DashboardScreen() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const insets = useSafeAreaInsets();
 
   const [trackerTreatments, setTrackerTreatments] = useState<TrackerTreatment[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
@@ -207,7 +210,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ScrollView style={[styles.screen, themed.screen]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.screen, themed.screen]} contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
       {/* Header */}
       <Text style={[styles.headerLabel, themed.headerLabel]}>Dashboard</Text>
 
@@ -351,7 +354,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 56,
     paddingBottom: 32,
   },
   headerLabel: {

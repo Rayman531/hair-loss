@@ -3,17 +3,21 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { CrownMascot } from '@/components/CrownMascot';
+import { useThemeContext } from '@/context/theme-context';
+import { Colors } from '@/constants/theme';
 
 export default function OnboardingCompleteScreen() {
   const router = useRouter();
+  const { colorScheme } = useThemeContext();
+  const colors = Colors[colorScheme];
 
   const handleCreateAccount = () => {
     router.push('/sign-up');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
       <View style={styles.content}>
         {/* Crown mascot — completion state with badge */}
@@ -23,20 +27,20 @@ export default function OnboardingCompleteScreen() {
 
         {/* Thank you message */}
         <View style={styles.messageSection}>
-          <Text style={styles.heading}>
+          <Text style={[styles.heading, { color: colors.text }]}>
             Thank you for taking the time to answer our questions!
           </Text>
 
-          <Text style={styles.subtext}>
+          <Text style={[styles.subtext, { color: colors.textTertiary }]}>
             Sign up and unlock your routine and progress tracker as well as other hair loss insights based off your onboarding!
           </Text>
         </View>
       </View>
 
       {/* Create Account button - fixed at bottom */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.createAccountButton}
+          style={[styles.createAccountButton, { backgroundColor: colors.accent }]}
           onPress={handleCreateAccount}
           activeOpacity={0.8}
         >
@@ -52,7 +56,6 @@ export default function OnboardingCompleteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
   content: {
     flex: 1,
@@ -75,14 +78,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1C1C1E',
     textAlign: 'center',
     lineHeight: 32,
     marginBottom: 16,
   },
   subtext: {
     fontSize: 14,
-    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 8,
@@ -92,10 +93,8 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#F8F8F8',
   },
   createAccountButton: {
-    backgroundColor: '#C4A882',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',

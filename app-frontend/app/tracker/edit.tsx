@@ -14,6 +14,8 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '../../constants/api';
+import { useThemeContext } from '@/context/theme-context';
+import { Colors } from '@/constants/theme';
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -54,6 +56,8 @@ interface EditableTreatment {
 export default function EditRoutineScreen() {
   const router = useRouter();
   const { userId } = useAuth();
+  const { colorScheme } = useThemeContext();
+  const colors = Colors[colorScheme];
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -240,9 +244,9 @@ export default function EditRoutineScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#000000" />
+          <ActivityIndicator size="large" color={colors.text} />
         </View>
       </SafeAreaView>
     );
@@ -252,36 +256,36 @@ export default function EditRoutineScreen() {
 
   if (showAddPicker) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setShowAddPicker(false)}>
-            <Text style={styles.backText}>Cancel</Text>
+            <Text style={[styles.backText, { color: colors.textTertiary }]}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.headerText}>Add Treatment</Text>
+          <Text style={[styles.headerText, { color: colors.text }]}>Add Treatment</Text>
           <View style={{ width: 60 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.selectTitle}>Select a treatment to add</Text>
+          <Text style={[styles.selectTitle, { color: colors.text }]}>Select a treatment to add</Text>
 
           <View style={styles.treatmentList}>
             {availableToAdd.map((t) => (
               <TouchableOpacity
                 key={t.id}
-                style={styles.treatmentPill}
+                style={[styles.treatmentPill, { backgroundColor: colors.accentSurface }]}
                 onPress={() => addTreatment(t)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.treatmentEmoji}>{t.emoji}</Text>
-                <Text style={styles.treatmentLabel}>{t.label}</Text>
+                <Text style={[styles.treatmentLabel, { color: colors.text }]}>{t.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
           {availableToAdd.length === 0 && (
-            <Text style={styles.allSavedText}>All available treatments are already in your routine.</Text>
+            <Text style={[styles.allSavedText, { color: colors.textTertiary }]}>All available treatments are already in your routine.</Text>
           )}
         </ScrollView>
       </SafeAreaView>
@@ -291,33 +295,33 @@ export default function EditRoutineScreen() {
   // ─── Main Edit View ───────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>Cancel</Text>
+          <Text style={[styles.backText, { color: colors.textTertiary }]}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={styles.headerText}>Edit Routine</Text>
+        <Text style={[styles.headerText, { color: colors.text }]}>Edit Routine</Text>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.sectionTitle}>Your Treatments</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Treatments</Text>
 
         {activeTreatments.length === 0 && (
-          <Text style={styles.emptyText}>No treatments. Add one below.</Text>
+          <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No treatments. Add one below.</Text>
         )}
 
         {treatments.map((treatment, index) => {
           if (treatment.deleted) return null;
           const meta = getTreatmentMeta(treatment.name);
           return (
-            <View key={treatment.serverId ?? `new-${index}`} style={styles.treatmentCard}>
+            <View key={treatment.serverId ?? `new-${index}`} style={[styles.treatmentCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
               <View style={styles.treatmentCardHeader}>
                 <View style={styles.treatmentInfo}>
                   <Text style={styles.treatmentEmoji}>{meta?.emoji ?? '💊'}</Text>
-                  <Text style={styles.treatmentCardName}>{treatment.name}</Text>
+                  <Text style={[styles.treatmentCardName, { color: colors.text }]}>{treatment.name}</Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => {
@@ -336,25 +340,26 @@ export default function EditRoutineScreen() {
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.removeText}>Remove</Text>
+                  <Text style={[styles.removeText, { color: colors.error }]}>Remove</Text>
                 </TouchableOpacity>
               </View>
 
               {meta?.tip && (
-                <View style={styles.tipContainer}>
+                <View style={[styles.tipContainer, { backgroundColor: colors.accentBackground }]}>
                   <Text style={styles.tipEmoji}>👑</Text>
-                  <Text style={styles.tipText}>{meta.tip}</Text>
+                  <Text style={[styles.tipText, { color: colors.textSecondary }]}>{meta.tip}</Text>
                 </View>
               )}
 
-              <Text style={styles.freqLabel}>Days per week</Text>
+              <Text style={[styles.freqLabel, { color: colors.textSecondary }]}>Days per week</Text>
               <View style={styles.freqRow}>
                 {FREQUENCY_OPTIONS.map((f) => (
                   <TouchableOpacity
                     key={f}
                     style={[
                       styles.freqChip,
-                      treatment.frequencyPerWeek === f && styles.freqChipSelected,
+                      { backgroundColor: colors.backgroundTertiary },
+                      treatment.frequencyPerWeek === f && { backgroundColor: colors.accent },
                     ]}
                     onPress={() => updateFrequency(index, f)}
                     activeOpacity={0.7}
@@ -362,6 +367,7 @@ export default function EditRoutineScreen() {
                     <Text
                       style={[
                         styles.freqChipText,
+                        { color: colors.text },
                         treatment.frequencyPerWeek === f && styles.freqChipTextSelected,
                       ]}
                     >
@@ -377,20 +383,20 @@ export default function EditRoutineScreen() {
         {/* Add treatment button */}
         {availableToAdd.length > 0 && (
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { borderColor: colors.border }]}
             onPress={() => setShowAddPicker(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.addButtonText}>+ Add Treatment</Text>
+            <Text style={[styles.addButtonText, { color: colors.textSecondary }]}>+ Add Treatment</Text>
           </TouchableOpacity>
         )}
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        {error && <Text style={[styles.errorText, { color: colors.error, backgroundColor: colors.errorBackground }]}>{error}</Text>}
       </ScrollView>
 
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          style={[styles.saveButton, { backgroundColor: colors.accent }, saving && { backgroundColor: colors.switchTrackOff }]}
           onPress={handleSave}
           disabled={saving}
           activeOpacity={0.8}
@@ -411,7 +417,6 @@ export default function EditRoutineScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
   centerContent: {
     flex: 1,
@@ -431,11 +436,9 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1C1C1E',
   },
   backText: {
     fontSize: 16,
-    color: '#8E8E93',
     width: 60,
   },
 
@@ -449,25 +452,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1C1C1E',
     paddingTop: 16,
     paddingBottom: 16,
   },
   emptyText: {
     fontSize: 14,
-    color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 32,
   },
 
   // Treatment card
   treatmentCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#EBEBEB',
   },
   treatmentCardHeader: {
     flexDirection: 'row',
@@ -482,11 +481,9 @@ const styles = StyleSheet.create({
   treatmentCardName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1C1C1E',
   },
   removeText: {
     fontSize: 14,
-    color: '#D44332',
     fontWeight: '500',
   },
 
@@ -494,7 +491,6 @@ const styles = StyleSheet.create({
   tipContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF8EF',
     borderRadius: 14,
     padding: 12,
     marginBottom: 14,
@@ -505,7 +501,6 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
-    color: '#636366',
     flex: 1,
     lineHeight: 18,
   },
@@ -513,7 +508,6 @@ const styles = StyleSheet.create({
   // Frequency selector
   freqLabel: {
     fontSize: 13,
-    color: '#636366',
     marginBottom: 8,
   },
   freqRow: {
@@ -524,17 +518,12 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#EEEEEE',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  freqChipSelected: {
-    backgroundColor: '#C4A882',
   },
   freqChipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1C1C1E',
   },
   freqChipTextSelected: {
     color: '#FFFFFF',
@@ -543,7 +532,6 @@ const styles = StyleSheet.create({
   // Add button
   addButton: {
     borderWidth: 2,
-    borderColor: '#E5E5E5',
     borderStyle: 'dashed',
     borderRadius: 16,
     paddingVertical: 18,
@@ -553,14 +541,12 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#636366',
   },
 
-  // Add picker (reusing onboarding styles)
+  // Add picker
   selectTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1C1C1E',
     lineHeight: 28,
     paddingTop: 24,
     paddingBottom: 24,
@@ -571,7 +557,6 @@ const styles = StyleSheet.create({
   treatmentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5EDDF',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 16,
@@ -585,11 +570,9 @@ const styles = StyleSheet.create({
   treatmentLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1C1C1E',
   },
   allSavedText: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 40,
   },
@@ -597,9 +580,7 @@ const styles = StyleSheet.create({
   // Error
   errorText: {
     fontSize: 14,
-    color: '#D44332',
     padding: 12,
-    backgroundColor: '#FDF2F0',
     borderRadius: 12,
     marginTop: 8,
   },
@@ -608,18 +589,13 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#F8F8F8',
   },
   saveButton: {
-    backgroundColor: '#C4A882',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#DDDDDD',
   },
   saveButtonText: {
     color: '#FFFFFF',

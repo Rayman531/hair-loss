@@ -5,6 +5,7 @@ import routine from './routes/routine'
 import dashboard from './routes/dashboard'
 import progress from './routes/progress'
 import tracker from './routes/tracker'
+import feedbackRoutes from './routes/feedback'
 
 type Env = {
   DATABASE_URL: string;
@@ -38,5 +39,8 @@ app.route('/api/progress', progress)
 
 // Mount routine tracker routes
 app.route('/api/tracker', tracker)
+
+// Mount feedback routes
+app.route('/api/feedback', feedbackRoutes)
 
 export default app

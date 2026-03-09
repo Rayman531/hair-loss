@@ -5,6 +5,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useEffect } from 'react';
 import React from 'react';
 import { CrownMascot } from '@/components/CrownMascot';
+import { useThemeContext } from '@/context/theme-context';
+import { Colors } from '@/constants/theme';
 
 // DEV ONLY: Set to a route like '/onboarding' to skip auth and go directly there
 // Set to null for normal behavior
@@ -14,6 +16,8 @@ const DEV_INITIAL_ROUTE: string | null = null;
 export default function WelcomeScreen() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { colorScheme } = useThemeContext();
+  const colors = Colors[colorScheme];
 
   useEffect(() => {
     // Dev override: skip auth check and go directly to specified route
@@ -37,9 +41,9 @@ export default function WelcomeScreen() {
   // Show loading while checking auth
   if (!isLoaded) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000000" />
+          <ActivityIndicator size="large" color={colors.text} />
         </View>
       </SafeAreaView>
     );
@@ -48,23 +52,23 @@ export default function WelcomeScreen() {
   // If signed in, show loading while redirecting
   if (isSignedIn) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000000" />
+          <ActivityIndicator size="large" color={colors.text} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
       <View style={styles.content}>
         {/* Header Section */}
         <View style={styles.headerSection}>
-          <Text style={styles.heading}>Welcome to{'\n'}Follix!</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.heading, { color: colors.text }]}>Welcome to{'\n'}Follix!</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Let's take a few minutes to get you setup, we'll be asking you a few questions to get a better idea of your hair loss journey
           </Text>
         </View>
@@ -77,7 +81,7 @@ export default function WelcomeScreen() {
         {/* Button Section */}
         <View style={styles.buttonSection}>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, { backgroundColor: colors.accent }]}
             activeOpacity={0.8}
             onPress={handleContinue}
           >
@@ -89,7 +93,7 @@ export default function WelcomeScreen() {
             activeOpacity={0.8}
             onPress={handleSignIn}
           >
-            <Text style={styles.signInButtonText}>Already have an account? Sign In</Text>
+            <Text style={[styles.signInButtonText, { color: colors.textSecondary }]}>Already have an account? Sign In</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -100,7 +104,6 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
   loadingContainer: {
     flex: 1,
@@ -122,7 +125,6 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 34,
     fontWeight: '700',
-    color: '#1A1A1A',
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 40,
@@ -130,7 +132,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#666666',
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 8,
@@ -149,7 +150,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   button: {
-    backgroundColor: '#000000',
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',
@@ -175,7 +175,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signInButtonText: {
-    color: '#666666',
     fontSize: 15,
     fontWeight: '500',
   },

@@ -10,20 +10,20 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  isDarkMode: false,
-  colorScheme: 'light',
+  isDarkMode: true,
+  colorScheme: 'dark',
   toggleDarkMode: () => {},
 });
 
 const STORAGE_KEY = 'follix_dark_mode';
 
 export function ThemeContextProvider({ children }: { children: React.ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((value) => {
-      if (value === 'true') {
-        setIsDarkMode(true);
+      if (value !== null) {
+        setIsDarkMode(value === 'true');
       }
     });
   }, []);

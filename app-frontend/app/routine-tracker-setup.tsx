@@ -15,6 +15,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '../constants/api';
 import { CrownMascot } from '@/components/CrownMascot';
+import { useThemeContext } from '@/context/theme-context';
+import { Colors } from '@/constants/theme';
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -45,6 +47,8 @@ type Step = 'loading' | 'select' | 'configure' | 'add-more' | 'complete';
 export default function RoutineTrackerSetupScreen() {
   const router = useRouter();
   const { userId } = useAuth();
+  const { colorScheme } = useThemeContext();
+  const colors = Colors[colorScheme];
 
   // Flow state
   const [step, setStep] = useState<Step>('loading');
@@ -263,9 +267,9 @@ export default function RoutineTrackerSetupScreen() {
 
   if (step === 'loading') {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#000000" />
+          <ActivityIndicator size="large" color={colors.text} />
         </View>
       </SafeAreaView>
     );
@@ -276,16 +280,16 @@ export default function RoutineTrackerSetupScreen() {
   if (step === 'select') {
     const hasSelection = selectedTreatments.length > 0;
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
         <View style={styles.header}>
-          <Text style={styles.headerText}>Routine Tracker - Setup</Text>
+          <Text style={[styles.headerText, { color: colors.textSecondary }]}>Routine Tracker - Setup</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.selectTitleRow}>
-            <Text style={styles.selectTitle}>
+            <Text style={[styles.selectTitle, { color: colors.text }]}>
               Please select the{'\n'}treatments you would like{'\n'}to track
             </Text>
             {/* Small crown mascot */}
@@ -298,30 +302,30 @@ export default function RoutineTrackerSetupScreen() {
               return (
                 <TouchableOpacity
                   key={t.id}
-                  style={[styles.treatmentPill, isSelected && styles.treatmentPillSelected]}
+                  style={[styles.treatmentPill, { backgroundColor: colors.accentSurface }, isSelected && { borderColor: colors.accent }]}
                   onPress={() => toggleTreatment(t.id)}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.treatmentEmoji}>{t.emoji}</Text>
-                  <Text style={styles.treatmentLabel}>{t.label}</Text>
+                  <Text style={[styles.treatmentLabel, { color: colors.text }]}>{t.label}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
           {availableTreatments.length === 0 && (
-            <Text style={styles.allSavedText}>All treatments have been configured!</Text>
+            <Text style={[styles.allSavedText, { color: colors.textSecondary }]}>All treatments have been configured!</Text>
           )}
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={[styles.continueButton, !hasSelection && styles.continueButtonDisabled]}
+            style={[styles.continueButton, { backgroundColor: colors.accent }, !hasSelection && { backgroundColor: colors.switchTrackOff }]}
             onPress={handleSelectContinue}
             disabled={!hasSelection}
             activeOpacity={0.8}
           >
-            <Text style={[styles.continueButtonText, !hasSelection && styles.continueButtonTextDisabled]}>
+            <Text style={[styles.continueButtonText, !hasSelection && { color: colors.textTertiary }]}>
               Continue
             </Text>
           </TouchableOpacity>
@@ -334,45 +338,45 @@ export default function RoutineTrackerSetupScreen() {
 
   if (step === 'configure' && currentTreatment) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
         <View style={styles.header}>
-          <Text style={styles.headerText}>Routine Tracker - Setup</Text>
+          <Text style={[styles.headerText, { color: colors.textSecondary }]}>Routine Tracker - Setup</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.configTitle}>
+          <Text style={[styles.configTitle, { color: colors.text }]}>
             How often would you like to take {currentTreatment.label}
           </Text>
 
           {/* Tip */}
-          <View style={styles.tipContainer}>
+          <View style={[styles.tipContainer, { backgroundColor: colors.accentBackground }]}>
             <Text style={styles.tipEmoji}>👑</Text>
-            <Text style={styles.tipText}>{currentTreatment.tip}</Text>
+            <Text style={[styles.tipText, { color: colors.textSecondary }]}>{currentTreatment.tip}</Text>
           </View>
 
-          <Text style={styles.sectionLabel}>Please select the days of the week and the time</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Please select the days of the week and the time</Text>
 
           {/* Day selector */}
           <View style={styles.dayGrid}>
             <TouchableOpacity
-              style={[styles.dayChip, isDaily && styles.dayChipSelected]}
+              style={[styles.dayChip, { backgroundColor: colors.backgroundTertiary }, isDaily && { backgroundColor: colors.accent }]}
               onPress={toggleDaily}
               activeOpacity={0.7}
             >
-              <Text style={[styles.dayChipText, isDaily && styles.dayChipTextSelected]}>Daily</Text>
+              <Text style={[styles.dayChipText, { color: colors.text }, isDaily && styles.dayChipTextSelected]}>Daily</Text>
             </TouchableOpacity>
             {ALL_DAYS.map((day, i) => {
               const active = selectedDays.has(day);
               return (
                 <TouchableOpacity
                   key={day}
-                  style={[styles.dayChip, active && styles.dayChipSelected]}
+                  style={[styles.dayChip, { backgroundColor: colors.backgroundTertiary }, active && { backgroundColor: colors.accent }]}
                   onPress={() => toggleDay(day)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.dayChipText, active && styles.dayChipTextSelected]}>
+                  <Text style={[styles.dayChipText, { color: colors.text }, active && styles.dayChipTextSelected]}>
                     {DAY_LABELS[i]}
                   </Text>
                 </TouchableOpacity>
@@ -384,7 +388,7 @@ export default function RoutineTrackerSetupScreen() {
           <View style={styles.timePickerContainer}>
             <View style={styles.timeInputGroup}>
               <TextInput
-                style={styles.timeInput}
+                style={[styles.timeInput, { backgroundColor: colors.accentSurface, color: colors.text }]}
                 value={hour}
                 onChangeText={(v) => {
                   const num = v.replace(/[^0-9]/g, '');
@@ -396,9 +400,9 @@ export default function RoutineTrackerSetupScreen() {
                 maxLength={2}
                 selectTextOnFocus
               />
-              <Text style={styles.timeSeparator}>:</Text>
+              <Text style={[styles.timeSeparator, { color: colors.text }]}>:</Text>
               <TextInput
-                style={styles.timeInput}
+                style={[styles.timeInput, { backgroundColor: colors.accentSurface, color: colors.text }]}
                 value={minute}
                 onChangeText={(v) => {
                   const num = v.replace(/[^0-9]/g, '');
@@ -412,28 +416,28 @@ export default function RoutineTrackerSetupScreen() {
               />
             </View>
 
-            <View style={styles.periodToggle}>
+            <View style={[styles.periodToggle, { borderColor: colors.border }]}>
               <TouchableOpacity
-                style={[styles.periodButton, period === 'AM' && styles.periodButtonActive]}
+                style={[styles.periodButton, { backgroundColor: colors.cardBackground }, period === 'AM' && { backgroundColor: colors.accentSurface }]}
                 onPress={() => setPeriod('AM')}
               >
-                <Text style={[styles.periodText, period === 'AM' && styles.periodTextActive]}>AM</Text>
+                <Text style={[styles.periodText, { color: colors.textSecondary }, period === 'AM' && { color: colors.text }]}>AM</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.periodButton, period === 'PM' && styles.periodButtonActive]}
+                style={[styles.periodButton, { backgroundColor: colors.cardBackground }, period === 'PM' && { backgroundColor: colors.accentSurface }]}
                 onPress={() => setPeriod('PM')}
               >
-                <Text style={[styles.periodText, period === 'PM' && styles.periodTextActive]}>PM</Text>
+                <Text style={[styles.periodText, { color: colors.textSecondary }, period === 'PM' && { color: colors.text }]}>PM</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
+          {error && <Text style={[styles.errorText, { color: colors.error, backgroundColor: colors.errorBackground }]}>{error}</Text>}
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={[styles.continueButton, saving && styles.continueButtonDisabled]}
+            style={[styles.continueButton, { backgroundColor: colors.accent }, saving && { backgroundColor: colors.switchTrackOff }]}
             onPress={handleConfigContinue}
             disabled={saving}
             activeOpacity={0.8}
@@ -454,11 +458,11 @@ export default function RoutineTrackerSetupScreen() {
   if (step === 'add-more') {
     const hasMore = availableTreatments.length > 0;
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
         <View style={styles.header}>
-          <Text style={styles.headerText}>Routine Tracker - Setup</Text>
+          <Text style={[styles.headerText, { color: colors.textSecondary }]}>Routine Tracker - Setup</Text>
         </View>
 
         <View style={styles.centeredContent}>
@@ -467,26 +471,26 @@ export default function RoutineTrackerSetupScreen() {
             <CrownMascot state="neutral" size={130} />
           </View>
 
-          <Text style={styles.addMoreHeading}>
+          <Text style={[styles.addMoreHeading, { color: colors.text }]}>
             Would you like to add another product?
           </Text>
-          <Text style={styles.addMoreSubtext}>
+          <Text style={[styles.addMoreSubtext, { color: colors.textSecondary }]}>
             You can always add more treatments later from your settings.
           </Text>
         </View>
 
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
           {hasMore && (
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={[styles.secondaryButton, { backgroundColor: colors.cardBackground, borderColor: colors.accent }]}
               onPress={handleAddAnother}
               activeOpacity={0.8}
             >
-              <Text style={styles.secondaryButtonText}>Add Another</Text>
+              <Text style={[styles.secondaryButtonText, { color: colors.accent }]}>Add Another</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
-            style={[styles.continueButton, hasMore && { marginTop: 12 }]}
+            style={[styles.continueButton, { backgroundColor: colors.accent }, hasMore && { marginTop: 12 }]}
             onPress={() => setStep('complete')}
             activeOpacity={0.8}
           >
@@ -500,11 +504,11 @@ export default function RoutineTrackerSetupScreen() {
   // ─── Step 4: Complete ───────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
       <View style={styles.header}>
-        <Text style={styles.headerText}>Routine Tracker - Setup</Text>
+        <Text style={[styles.headerText, { color: colors.textSecondary }]}>Routine Tracker - Setup</Text>
       </View>
 
       <View style={styles.centeredContent}>
@@ -513,15 +517,15 @@ export default function RoutineTrackerSetupScreen() {
           <CrownMascot state="completion" size={130} />
         </View>
 
-        <Text style={styles.completeHeading}>You're all set!</Text>
-        <Text style={styles.completeSubtext}>
+        <Text style={[styles.completeHeading, { color: colors.text }]}>You're all set!</Text>
+        <Text style={[styles.completeSubtext, { color: colors.textSecondary }]}>
           Your routine has been logged. Remember to stay consistent to see results. You got this!
         </Text>
       </View>
 
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.continueButton}
+          style={[styles.continueButton, { backgroundColor: colors.accent }]}
           onPress={() => router.replace('/(tabs)')}
           activeOpacity={0.8}
         >
@@ -537,7 +541,6 @@ export default function RoutineTrackerSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
   centerContent: {
     flex: 1,
@@ -560,7 +563,6 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
   },
 
   // Scroll
@@ -581,7 +583,6 @@ const styles = StyleSheet.create({
   selectTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1C1C1E',
     lineHeight: 28,
     flex: 1,
     marginRight: 16,
@@ -595,15 +596,11 @@ const styles = StyleSheet.create({
   treatmentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5EDDF',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: 'transparent',
-  },
-  treatmentPillSelected: {
-    borderColor: '#C4A882',
   },
   treatmentEmoji: {
     fontSize: 22,
@@ -612,11 +609,9 @@ const styles = StyleSheet.create({
   treatmentLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1C1C1E',
   },
   allSavedText: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     paddingVertical: 40,
   },
@@ -626,7 +621,6 @@ const styles = StyleSheet.create({
   configTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1C1C1E',
     lineHeight: 30,
     paddingTop: 24,
     paddingBottom: 16,
@@ -634,7 +628,6 @@ const styles = StyleSheet.create({
   tipContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF8EF',
     borderRadius: 14,
     padding: 14,
     marginBottom: 20,
@@ -645,13 +638,11 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
-    color: '#636366',
     flex: 1,
     lineHeight: 18,
   },
   sectionLabel: {
     fontSize: 14,
-    color: '#636366',
     marginBottom: 14,
   },
 
@@ -666,15 +657,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#EEEEEE',
-  },
-  dayChipSelected: {
-    backgroundColor: '#C4A882',
   },
   dayChipText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1C1C1E',
   },
   dayChipTextSelected: {
     color: '#FFFFFF',
@@ -694,48 +680,34 @@ const styles = StyleSheet.create({
   timeInput: {
     width: 72,
     height: 72,
-    backgroundColor: '#F5EDDF',
     borderRadius: 16,
     fontSize: 32,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#1C1C1E',
   },
   timeSeparator: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#1C1C1E',
     marginHorizontal: 6,
   },
   periodToggle: {
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   periodButton: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  periodButtonActive: {
-    backgroundColor: '#F5EDDF',
   },
   periodText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8E8E93',
-  },
-  periodTextActive: {
-    color: '#1C1C1E',
   },
 
   // Error
   errorText: {
     fontSize: 14,
-    color: '#D44332',
     padding: 12,
-    backgroundColor: '#FDF2F0',
     borderRadius: 12,
     marginTop: 8,
   },
@@ -745,14 +717,12 @@ const styles = StyleSheet.create({
   addMoreHeading: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1C1C1E',
     textAlign: 'center',
     marginTop: 32,
     marginBottom: 12,
   },
   addMoreSubtext: {
     fontSize: 14,
-    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
@@ -763,14 +733,12 @@ const styles = StyleSheet.create({
   completeHeading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1C1C1E',
     textAlign: 'center',
     marginTop: 32,
     marginBottom: 12,
   },
   completeSubtext: {
     fontSize: 14,
-    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
@@ -787,39 +755,28 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#F8F8F8',
   },
   continueButton: {
-    backgroundColor: '#C4A882',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#DDDDDD',
   },
   continueButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  continueButtonTextDisabled: {
-    color: '#8E8E93',
-  },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
     borderWidth: 2,
-    borderColor: '#C4A882',
   },
   secondaryButtonText: {
-    color: '#C4A882',
     fontSize: 16,
     fontWeight: '600',
   },

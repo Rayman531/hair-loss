@@ -16,6 +16,7 @@ import JourneyHeader from '../../components/tracker/JourneyHeader';
 import WeeklyConsistency from '../../components/tracker/WeeklyConsistency';
 import AdherenceCalendar from '../../components/tracker/AdherenceCalendar';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 
@@ -56,6 +57,7 @@ export default function RoutineTrackerScreen() {
   const colorScheme = useColorScheme();
   const dark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
+  const insets = useSafeAreaInsets();
 
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
@@ -154,32 +156,32 @@ export default function RoutineTrackerScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.screen, themed.screen]}>
+      <View style={[styles.screen, themed.screen]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error || !summary) {
     return (
-      <SafeAreaView style={[styles.screen, themed.screen]}>
+      <View style={[styles.screen, themed.screen]}>
         <View style={styles.centered}>
           <Text style={[styles.emptyTitle, themed.emptyTitle]}>No Routine Yet</Text>
           <Text style={styles.emptySubtext}>
             {error || 'Set up your routine to start tracking your hair journey.'}
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.screen, themed.screen]}>
+    <View style={[styles.screen, themed.screen]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.headerLabel}>Routine Tracker</Text>
@@ -209,7 +211,7 @@ export default function RoutineTrackerScreen() {
           <Text style={[styles.editButtonText, themed.editButtonText]}>Edit Routine</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -222,7 +224,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 56,
     paddingBottom: 40,
   },
   centered: {

@@ -4,10 +4,14 @@ import { useState } from 'react';
 import React from 'react';
 import { useSignUp } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
+import { useThemeContext } from '@/context/theme-context';
+import { Colors } from '@/constants/theme';
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
+  const { colorScheme } = useThemeContext();
+  const colors = Colors[colorScheme];
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -70,28 +74,29 @@ export default function SignUpScreen() {
 
   if (pendingVerification) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}
         >
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.content}>
-              <Text style={styles.heading}>Verify your email</Text>
-              <Text style={styles.subtext}>
+              <Text style={[styles.heading, { color: colors.text }]}>Verify your email</Text>
+              <Text style={[styles.subtext, { color: colors.textSecondary }]}>
                 We've sent a verification code to {email}
               </Text>
 
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? <Text style={[styles.errorText, { color: colors.error, backgroundColor: colors.errorBackground }]}>{error}</Text> : null}
 
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Verification Code</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Verification Code</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
                   value={code}
                   onChangeText={setCode}
                   placeholder="Enter code"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType="number-pad"
                   autoCapitalize="none"
                 />
@@ -99,9 +104,9 @@ export default function SignUpScreen() {
             </View>
           </ScrollView>
 
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[styles.button, { backgroundColor: colors.accent }, loading && { backgroundColor: colors.switchTrackOff }]}
               onPress={onVerifyPress}
               disabled={loading}
               activeOpacity={0.8}
@@ -119,52 +124,55 @@ export default function SignUpScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            <Text style={styles.heading}>Create your account</Text>
-            <Text style={styles.subtext}>
+            <Text style={[styles.heading, { color: colors.text }]}>Create your account</Text>
+            <Text style={[styles.subtext, { color: colors.textSecondary }]}>
               Start your hair care journey with personalized insights
             </Text>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? <Text style={[styles.errorText, { color: colors.error, backgroundColor: colors.errorBackground }]}>{error}</Text> : null}
 
             <View style={styles.nameRow}>
               <View style={[styles.inputContainer, styles.halfInput]}>
-                <Text style={styles.label}>First Name</Text>
+                <Text style={[styles.label, { color: colors.text }]}>First Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
                   value={firstName}
                   onChangeText={setFirstName}
                   placeholder="John"
+                  placeholderTextColor={colors.textTertiary}
                   autoCapitalize="words"
                 />
               </View>
 
               <View style={[styles.inputContainer, styles.halfInput]}>
-                <Text style={styles.label}>Last Name</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Last Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
                   value={lastName}
                   onChangeText={setLastName}
                   placeholder="Doe"
+                  placeholderTextColor={colors.textTertiary}
                   autoCapitalize="words"
                 />
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="john@example.com"
+                placeholderTextColor={colors.textTertiary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -172,21 +180,22 @@ export default function SignUpScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Password</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.cardBackground, color: colors.text, borderColor: colors.border }]}
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Create a password"
+                placeholderTextColor={colors.textTertiary}
                 secureTextEntry
               />
             </View>
           </View>
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: colors.accent }, loading && { backgroundColor: colors.switchTrackOff }]}
             onPress={onSignUpPress}
             disabled={loading}
             activeOpacity={0.8}
@@ -206,7 +215,6 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
   keyboardView: {
     flex: 1,
@@ -222,21 +230,17 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1C1C1E',
     marginBottom: 8,
   },
   subtext: {
     fontSize: 16,
-    color: '#636366',
     marginBottom: 32,
     lineHeight: 22,
   },
   errorText: {
     fontSize: 14,
-    color: '#D44332',
     marginBottom: 16,
     padding: 12,
-    backgroundColor: '#FDF2F0',
     borderRadius: 12,
   },
   nameRow: {
@@ -252,34 +256,25 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1C1C1E',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#1C1C1E',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   buttonContainer: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#F8F8F8',
   },
   button: {
-    backgroundColor: '#C4A882',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
-  },
-  buttonDisabled: {
-    backgroundColor: '#C8C8C8',
   },
   buttonText: {
     color: '#FFFFFF',

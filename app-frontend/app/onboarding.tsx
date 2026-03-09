@@ -5,6 +5,9 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { API_ENDPOINTS, API_BASE_URL } from '../constants/api';
 import { CrownMascot } from '@/components/CrownMascot';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeContext } from '@/context/theme-context';
+import { Colors } from '@/constants/theme';
 
 // Types matching backend API
 interface QuestionOption {
@@ -32,6 +35,9 @@ export default function OnboardingScreen() {
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { colorScheme } = useThemeContext();
+  const colors = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
   // Fetch questions on mount
   useEffect(() => {
@@ -93,9 +99,9 @@ export default function OnboardingScreen() {
   // Loading state
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#000000" />
+          <ActivityIndicator size="large" color={colors.text} />
         </View>
       </SafeAreaView>
     );
@@ -104,9 +110,9 @@ export default function OnboardingScreen() {
   // Error state
   if (error || questions.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>{error || 'No questions available'}</Text>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || 'No questions available'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -116,13 +122,13 @@ export default function OnboardingScreen() {
   const isContinueDisabled = selectedOptionId === null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header with progress indicator */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>
+          <Text style={[styles.headerText, { color: colors.textSecondary }]}>
             Onboarding Question
           </Text>
         </View>
@@ -137,7 +143,7 @@ export default function OnboardingScreen() {
 
         {/* Question */}
         <View style={styles.questionSection}>
-          <Text style={styles.questionText}>{currentQuestion.question}</Text>
+          <Text style={[styles.questionText, { color: colors.text }]}>{currentQuestion.question}</Text>
         </View>
 
         {/* Options */}
@@ -149,13 +155,15 @@ export default function OnboardingScreen() {
                 key={option.id}
                 style={[
                   styles.optionButton,
-                  isSelected && styles.optionButtonSelected,
+                  { backgroundColor: colors.backgroundTertiary },
+                  isSelected && { backgroundColor: colors.accent },
                 ]}
                 onPress={() => handleOptionSelect(option.id)}
                 activeOpacity={0.7}
               >
                 <Text style={[
                   styles.optionText,
+                  { color: colors.text },
                   isSelected && styles.optionTextSelected,
                 ]}>
                   {option.text}
@@ -167,11 +175,12 @@ export default function OnboardingScreen() {
       </ScrollView>
 
       {/* Continue button - fixed at bottom */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background, borderTopColor: colors.divider, paddingBottom: insets.bottom + 20 }]}>
         <TouchableOpacity
           style={[
             styles.continueButton,
-            isContinueDisabled && styles.continueButtonDisabled,
+            { backgroundColor: colors.accent },
+            isContinueDisabled && { backgroundColor: colors.switchTrackOff },
           ]}
           onPress={handleContinue}
           disabled={isContinueDisabled}
@@ -179,7 +188,7 @@ export default function OnboardingScreen() {
         >
           <Text style={[
             styles.continueButtonText,
-            isContinueDisabled && styles.continueButtonTextDisabled,
+            isContinueDisabled && { color: colors.textTertiary },
           ]}>
             Continue
           </Text>
@@ -192,7 +201,6 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -212,7 +220,6 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 14,
-    color: '#636366',
     fontWeight: '400',
   },
 
@@ -229,7 +236,6 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#1C1C1E',
     textAlign: 'left',
     lineHeight: 30,
   },
@@ -240,19 +246,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   optionButton: {
-    backgroundColor: '#EEEEEE',
     paddingVertical: 18,
     paddingHorizontal: 24,
     borderRadius: 14,
     minHeight: 56,
     justifyContent: 'center',
   },
-  optionButtonSelected: {
-    backgroundColor: '#C4A882',
-  },
   optionText: {
     fontSize: 16,
-    color: '#1C1C1E',
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -268,34 +269,24 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#F8F8F8',
     borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
   },
   continueButton: {
-    backgroundColor: '#C4A882',
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
   },
-  continueButtonDisabled: {
-    backgroundColor: '#DDDDDD',
-  },
   continueButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  continueButtonTextDisabled: {
-    color: '#8E8E93',
-  },
 
   // Error
   errorText: {
     fontSize: 16,
-    color: '#636366',
     textAlign: 'center',
   },
 });
