@@ -14,6 +14,7 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '../../constants/api';
+import Svg, { Path } from 'react-native-svg';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
 
@@ -36,7 +37,8 @@ const TREATMENTS: TreatmentOption[] = [
   { id: 'hair_oils', label: 'Hair Oils', emoji: '🫧', tip: 'Apply hair oils as part of your daily routine' },
 ];
 
-const FREQUENCY_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;
+const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'] as const;
 
 interface ExistingTreatment {
   id: string;
@@ -47,7 +49,7 @@ interface ExistingTreatment {
 interface EditableTreatment {
   serverId: string | null; // null = newly added
   name: string;
-  frequencyPerWeek: number;
+  selectedDays: Set<string>;
   deleted: boolean;
 }
 
@@ -94,7 +96,7 @@ export default function EditRoutineScreen() {
           existing.map((t) => ({
             serverId: t.id,
             name: t.name,
-            frequencyPerWeek: t.frequencyPerWeek,
+            selectedDays: new Set(ALL_DAYS.slice(0, Math.min(t.frequencyPerWeek, 7))),
             deleted: false,
           }))
         );
@@ -113,10 +115,25 @@ export default function EditRoutineScreen() {
 
   const availableToAdd = TREATMENTS.filter((t) => !activeNames.has(t.label));
 
-  const updateFrequency = (index: number, freq: number) => {
+  const toggleDay = (index: number, day: string) => {
     setTreatments((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], frequencyPerWeek: freq };
+      const days = new Set(next[index].selectedDays);
+      if (days.has(day)) {
+        days.delete(day);
+      } else {
+        days.add(day);
+      }
+      next[index] = { ...next[index], selectedDays: days };
+      return next;
+    });
+  };
+
+  const toggleDaily = (index: number) => {
+    setTreatments((prev) => {
+      const next = [...prev];
+      const isDaily = next[index].selectedDays.size === 7;
+      next[index] = { ...next[index], selectedDays: isDaily ? new Set() : new Set(ALL_DAYS) };
       return next;
     });
   };
@@ -153,7 +170,7 @@ export default function EditRoutineScreen() {
         {
           serverId: null,
           name: option.label,
-          frequencyPerWeek: 7,
+          selectedDays: new Set(ALL_DAYS),
           deleted: false,
         },
       ]);
@@ -193,12 +210,13 @@ export default function EditRoutineScreen() {
         } else if (!treatment.deleted && treatment.serverId) {
           // PATCH updated treatments (check if frequency changed)
           const original = originalTreatments.find((o) => o.id === treatment.serverId);
-          if (original && original.frequencyPerWeek !== treatment.frequencyPerWeek) {
+          const newFreq = treatment.selectedDays.size;
+          if (original && original.frequencyPerWeek !== newFreq) {
             promises.push(
               fetch(`${API_ENDPOINTS.TRACKER_TREATMENTS}/${treatment.serverId}`, {
                 method: 'PATCH',
                 headers,
-                body: JSON.stringify({ frequencyPerWeek: treatment.frequencyPerWeek }),
+                body: JSON.stringify({ frequencyPerWeek: newFreq }),
               })
             );
           }
@@ -210,7 +228,7 @@ export default function EditRoutineScreen() {
               headers,
               body: JSON.stringify({
                 name: treatment.name,
-                frequencyPerWeek: treatment.frequencyPerWeek,
+                frequencyPerWeek: treatment.selectedDays.size,
               }),
             })
           );
@@ -346,35 +364,40 @@ export default function EditRoutineScreen() {
 
               {meta?.tip && (
                 <View style={[styles.tipContainer, { backgroundColor: colors.accentBackground }]}>
-                  <Text style={styles.tipEmoji}>👑</Text>
+                  <Svg width={36} height={36} viewBox="0 0 500 500" fill="none">
+                    <Path d="M250 50 C280 50 310 140 335 175 C340 180 390 155 440 145 C460 140 465 160 455 180 C440 210 425 350 415 385 C390 440 110 440 85 385 C75 350 60 210 45 180 C35 160 40 140 60 145 C110 155 160 180 165 175 C190 140 220 50 250 50Z" fill="#FFFCE6" stroke="#8C8679" strokeWidth={16} strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M150 245 C170 270 210 270 230 245" stroke="#8C8679" strokeWidth={13} strokeLinecap="round" fill="none" />
+                    <Path d="M275 245 C295 270 335 270 355 245" stroke="#8C8679" strokeWidth={13} strokeLinecap="round" fill="none" />
+                    <Path d="M220 295 C235 315 265 315 280 295" stroke="#8C8679" strokeWidth={13} strokeLinecap="round" fill="none" />
+                  </Svg>
                   <Text style={[styles.tipText, { color: colors.textSecondary }]}>{meta.tip}</Text>
                 </View>
               )}
 
               <Text style={[styles.freqLabel, { color: colors.textSecondary }]}>Days per week</Text>
-              <View style={styles.freqRow}>
-                {FREQUENCY_OPTIONS.map((f) => (
-                  <TouchableOpacity
-                    key={f}
-                    style={[
-                      styles.freqChip,
-                      { backgroundColor: colors.backgroundTertiary },
-                      treatment.frequencyPerWeek === f && { backgroundColor: colors.accent },
-                    ]}
-                    onPress={() => updateFrequency(index, f)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.freqChipText,
-                        { color: colors.text },
-                        treatment.frequencyPerWeek === f && styles.freqChipTextSelected,
-                      ]}
+              <View style={styles.dayGrid}>
+                <TouchableOpacity
+                  style={[styles.dayChip, { backgroundColor: colors.backgroundTertiary }, treatment.selectedDays.size === 7 && { backgroundColor: colors.accent }]}
+                  onPress={() => toggleDaily(index)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.dayChipText, { color: colors.text }, treatment.selectedDays.size === 7 && styles.dayChipTextSelected]}>Daily</Text>
+                </TouchableOpacity>
+                {ALL_DAYS.map((day, i) => {
+                  const active = treatment.selectedDays.has(day);
+                  return (
+                    <TouchableOpacity
+                      key={day}
+                      style={[styles.dayChip, { backgroundColor: colors.backgroundTertiary }, active && { backgroundColor: colors.accent }]}
+                      onPress={() => toggleDay(index, day)}
+                      activeOpacity={0.7}
                     >
-                      {f}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text style={[styles.dayChipText, { color: colors.text }, active && styles.dayChipTextSelected]}>
+                        {DAY_LABELS[i]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           );
@@ -496,9 +519,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     gap: 10,
   },
-  tipEmoji: {
-    fontSize: 18,
-  },
   tipText: {
     fontSize: 13,
     flex: 1,
@@ -510,22 +530,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 8,
   },
-  freqRow: {
+  dayGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 4,
   },
-  freqChip: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
+  dayChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
   },
-  freqChipText: {
-    fontSize: 14,
-    fontWeight: '600',
+  dayChipText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
-  freqChipTextSelected: {
+  dayChipTextSelected: {
     color: '#FFFFFF',
   },
 

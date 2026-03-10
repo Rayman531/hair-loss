@@ -2,6 +2,7 @@ import { StyleSheet, ActivityIndicator, Pressable, ScrollView, View, Text, SafeA
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { useRouter, Link } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -136,22 +137,24 @@ export default function DashboardScreen() {
       });
   }, [user?.id]);
 
-  useEffect(() => {
-    if (!user?.id) return;
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
 
-    Promise.all([
-      fetchTrackerTreatments(user.id),
-      fetchTodayLogs(user.id, todayMonth),
-    ]).then(([treatments, logs]) => {
-      setTrackerTreatments(treatments);
-      const todayCompleted = new Set(
-        logs
-          .filter((l) => l.date === today && l.completed)
-          .map((l) => l.treatmentId),
-      );
-      setCompletedIds(todayCompleted);
-    });
-  }, [user?.id, today, todayMonth]);
+      Promise.all([
+        fetchTrackerTreatments(user.id),
+        fetchTodayLogs(user.id, todayMonth),
+      ]).then(([treatments, logs]) => {
+        setTrackerTreatments(treatments);
+        const todayCompleted = new Set(
+          logs
+            .filter((l) => l.date === today && l.completed)
+            .map((l) => l.treatmentId),
+        );
+        setCompletedIds(todayCompleted);
+      });
+    }, [user?.id, today, todayMonth])
+  );
 
   const handleToggle = useCallback(async (treatmentId: string) => {
     if (!user?.id || togglingIds.has(treatmentId)) return;

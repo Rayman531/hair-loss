@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '../constants/api';
 import { CrownMascot } from '@/components/CrownMascot';
+import Svg, { Path } from 'react-native-svg';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
 
@@ -352,7 +353,12 @@ export default function RoutineTrackerSetupScreen() {
 
           {/* Tip */}
           <View style={[styles.tipContainer, { backgroundColor: colors.accentBackground }]}>
-            <Text style={styles.tipEmoji}>👑</Text>
+            <Svg width={36} height={36} viewBox="0 0 500 500" fill="none">
+              <Path d="M250 50 C280 50 310 140 335 175 C340 180 390 155 440 145 C460 140 465 160 455 180 C440 210 425 350 415 385 C390 440 110 440 85 385 C75 350 60 210 45 180 C35 160 40 140 60 145 C110 155 160 180 165 175 C190 140 220 50 250 50Z" fill="#FFFCE6" stroke="#8C8679" strokeWidth={16} strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M150 245 C170 270 210 270 230 245" stroke="#8C8679" strokeWidth={13} strokeLinecap="round" fill="none" />
+              <Path d="M275 245 C295 270 335 270 355 245" stroke="#8C8679" strokeWidth={13} strokeLinecap="round" fill="none" />
+              <Path d="M220 295 C235 315 265 315 280 295" stroke="#8C8679" strokeWidth={13} strokeLinecap="round" fill="none" />
+            </Svg>
             <Text style={[styles.tipText, { color: colors.textSecondary }]}>{currentTreatment.tip}</Text>
           </View>
 
@@ -632,9 +638,6 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 20,
     gap: 10,
-  },
-  tipEmoji: {
-    fontSize: 20,
   },
   tipText: {
     fontSize: 13,

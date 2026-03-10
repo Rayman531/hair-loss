@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useEffect } from 'react';
 import React from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import { CrownMascot } from '@/components/CrownMascot';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
@@ -18,6 +19,7 @@ export default function WelcomeScreen() {
   const { isSignedIn, isLoaded } = useAuth();
   const { colorScheme } = useThemeContext();
   const colors = Colors[colorScheme];
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     // Dev override: skip auth check and go directly to specified route
@@ -25,10 +27,10 @@ export default function WelcomeScreen() {
       router.replace(DEV_INITIAL_ROUTE as any);
       return;
     }
-    if (isLoaded && isSignedIn) {
+    if (isLoaded && isSignedIn && isFocused) {
       router.replace('/(tabs)');
     }
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, isFocused]);
 
   const handleContinue = () => {
     router.push('/onboarding');

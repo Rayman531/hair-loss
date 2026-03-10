@@ -23,14 +23,14 @@ function getTodaysTreatments(routines: Routine[]): Routine[] {
 }
 
 const MOTIVATIONAL_MESSAGES = [
-  'Male pattern baldness is extremely common — by age 50, ~50% of men are affected, so you\'re not alone in this.',
-  'Minoxidil can regrow and thicken miniaturized hairs in many users — consistency is key.',
+  'Male pattern baldness is extremely common, by age 50, ~50% of men are affected, so you\'re not alone in this.',
+  'Minoxidil can regrow and thicken miniaturized hairs in many users, consistency is key.',
   'The "Big 4" (finasteride, minoxidil, ketoconazole, microneedling) covers the major mechanisms behind AGA.',
-  'Early intervention dramatically improves outcomes — starting now is scientifically smarter than waiting.',
+  'Early intervention dramatically improves outcomes, starting now is scientifically smarter than waiting.',
   'Hair follicles in AGA shrink (miniaturize) before they die, meaning many are still recoverable.',
   'Progress pics show real reversals when you stay consistent.',
-  'Research on next-gen treatments (e.g., pyrilutamide, GT20029) is ongoing — innovation hasn\'t stopped!',
-  'Most hair loss is genetic and hormonal — not your fault, not from wearing hats or shampoo.',
+  'Research on next-gen treatments (e.g., pyrilutamide, GT20029) is ongoing, innovation hasn\'t stopped!',
+  'Most hair loss is genetic and hormonal, not your fault, not from wearing hats or shampoo.',
   'A simple daily routine (5 minutes morning and night) can biologically change your hair\'s trajectory over months.',
 ] as const;
 

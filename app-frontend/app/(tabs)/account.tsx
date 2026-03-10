@@ -171,7 +171,13 @@ export default function AccountScreen() {
       </View>
 
       {/* Sign Out */}
-      <Pressable style={[styles.signOutBtn, themed.signOutBtn]} onPress={() => signOut()}>
+      <Pressable
+        style={[styles.signOutBtn, themed.signOutBtn]}
+        onPress={async () => {
+          await signOut();
+          router.replace('/sign-in');
+        }}
+      >
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
 

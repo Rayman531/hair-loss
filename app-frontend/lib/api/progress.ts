@@ -20,11 +20,6 @@ export type CapturedPhoto = {
   note?: string;
 };
 
-async function uriToBlob(uri: string): Promise<Blob> {
-  const response = await fetch(uri);
-  return response.blob();
-}
-
 export async function uploadProgressSession(
   userId: string,
   photos: Record<Angle, CapturedPhoto>,
@@ -34,9 +29,11 @@ export async function uploadProgressSession(
   const notes: string[] = [];
   for (const angle of ALL_ANGLES) {
     const photo = photos[angle];
-    const blob = await uriToBlob(photo.uri);
-    const file = new File([blob], `${angle}.jpg`, { type: 'image/jpeg' });
-    formData.append(angle, file);
+    formData.append(angle, {
+      uri: photo.uri,
+      name: `${angle}.jpg`,
+      type: 'image/jpeg',
+    } as any);
 
     if (photo.note) {
       notes.push(`${angle}: ${photo.note}`);
@@ -47,7 +44,7 @@ export async function uploadProgressSession(
     formData.append('note', notes.join('; '));
   }
 
-  console.log(`[Progress] Uploading session for user ${userId} (${ALL_ANGLES.map(a => `${a}: ${formData.get(a) instanceof File}`).join(', ')})`);
+  console.log(`[Progress] Uploading session for user ${userId}`);
 
   const response = await fetch(API_ENDPOINTS.PROGRESS_UPLOAD, {
     method: 'POST',

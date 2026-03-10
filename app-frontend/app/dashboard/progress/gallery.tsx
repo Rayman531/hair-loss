@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -39,6 +40,8 @@ export default function GalleryScreen() {
   const colorScheme = useColorScheme();
   const dark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
+
+  const insets = useSafeAreaInsets();
 
   const [sessions, setSessions] = useState<ProgressSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,8 +142,8 @@ export default function GalleryScreen() {
   return (
     <View style={[styles.container, themed.container]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.heading, themed.heading]}>Your Progress</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
+        <Text style={[styles.heading, themed.heading]} numberOfLines={1}>Your Progress</Text>
         <View style={styles.headerActions}>
           {sessions.length >= 2 && (
             <Pressable
@@ -160,7 +163,7 @@ export default function GalleryScreen() {
       </View>
 
       {/* Sessions list */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}>
         {sessions.length === 0 ? (
           <Text style={styles.emptyText}>No progress photos yet.</Text>
         ) : (
@@ -221,12 +224,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 12,
     paddingBottom: 8,
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
+    flexShrink: 1,
+    marginRight: 10,
   },
   headerActions: {
     flexDirection: 'row',
