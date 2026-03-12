@@ -33,6 +33,7 @@ export const treatments = pgTable('treatments', {
     .notNull()
     .references(() => routines.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  daysOfWeek: text('days_of_week').array().notNull().default([]),
   frequencyPerWeek: integer('frequency_per_week').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

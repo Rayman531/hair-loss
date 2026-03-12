@@ -4,6 +4,7 @@ export type TrackerTreatment = {
   id: string;
   routineId: string;
   name: string;
+  daysOfWeek: string[];
   frequencyPerWeek: number;
 };
 
@@ -27,8 +28,8 @@ export async function fetchDashboard(userId: string) {
   return response.json();
 }
 
-export async function fetchTrackerTreatments(userId: string): Promise<TrackerTreatment[]> {
-  const response = await fetch(API_ENDPOINTS.TRACKER_TREATMENTS, {
+export async function fetchTrackerTreatments(userId: string, day: string): Promise<TrackerTreatment[]> {
+  const response = await fetch(`${API_ENDPOINTS.TRACKER_TREATMENTS}?day=${day}`, {
     headers: { "X-User-Id": userId },
   });
 

@@ -227,7 +227,7 @@ export default function RoutineTrackerSetupScreen() {
           headers,
           body: JSON.stringify({
             name: treatmentInfo?.label ?? treatment,
-            frequencyPerWeek: selectedDays.size,
+            daysOfWeek: Array.from(selectedDays),
           }),
         });
       }

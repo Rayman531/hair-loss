@@ -40,6 +40,12 @@ function getTodayMonth(): string {
   return getTodayDateString().slice(0, 7);
 }
 
+const WEEKDAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+
+function getTodayWeekday(): string {
+  return WEEKDAY_NAMES[new Date().getDay()];
+}
+
 type Treatment = {
   id: number;
   treatmentType: string;
@@ -83,6 +89,7 @@ export default function DashboardScreen() {
 
   const today = getTodayDateString();
   const todayMonth = getTodayMonth();
+  const todayWeekday = getTodayWeekday();
 
   // Floating animation for crown logo
   const floatY = useSharedValue(0);
@@ -142,7 +149,7 @@ export default function DashboardScreen() {
       if (!user?.id) return;
 
       Promise.all([
-        fetchTrackerTreatments(user.id),
+        fetchTrackerTreatments(user.id, todayWeekday),
         fetchTodayLogs(user.id, todayMonth),
       ]).then(([treatments, logs]) => {
         setTrackerTreatments(treatments);
@@ -153,7 +160,7 @@ export default function DashboardScreen() {
         );
         setCompletedIds(todayCompleted);
       });
-    }, [user?.id, today, todayMonth])
+    }, [user?.id, today, todayMonth, todayWeekday])
   );
 
   const handleToggle = useCallback(async (treatmentId: string) => {

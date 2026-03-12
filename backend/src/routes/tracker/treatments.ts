@@ -6,6 +6,9 @@ import { eq, and, asc } from 'drizzle-orm';
 type Env = { DATABASE_URL: string };
 type Variables = { userId: string };
 
+const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+type DayOfWeek = typeof VALID_DAYS[number];
+
 const treatmentsRoute = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // Auth guard
@@ -28,22 +31,37 @@ async function getUserRoutine(db: ReturnType<typeof createDrizzleConnection>, us
   return routine ?? null;
 }
 
-// GET /api/tracker/treatments — list all treatments for the user's routine
+// GET /api/tracker/treatments — list treatments for the user's routine
+// Pass ?day=monday (or any weekday) to filter to only that day's treatments.
+// If omitted, all treatments are returned.
 treatmentsRoute.get('/', async (c) => {
   try {
     const db = createDrizzleConnection(c.env.DATABASE_URL);
     const userId = c.get('userId');
+    const dayParam = c.req.query('day');
 
     const routine = await getUserRoutine(db, userId);
     if (!routine) {
       return c.json({ success: true, data: [] });
     }
 
-    const result = await db
+    let query = db
       .select()
       .from(treatments)
       .where(eq(treatments.routineId, routine.id))
       .orderBy(asc(treatments.createdAt));
+
+    const result = await query;
+
+    // Filter server-side by day if provided.
+    // Treatments with an empty daysOfWeek (saved before this field existed) are
+    // treated as "all days" so existing data isn't broken.
+    if (dayParam && VALID_DAYS.includes(dayParam as DayOfWeek)) {
+      const filtered = result.filter(
+        (t) => t.daysOfWeek.length === 0 || t.daysOfWeek.includes(dayParam),
+      );
+      return c.json({ success: true, data: filtered });
+    }
 
     return c.json({ success: true, data: result });
   } catch (error) {
@@ -69,7 +87,7 @@ treatmentsRoute.post('/', async (c) => {
       }, 400);
     }
 
-    const body = await c.req.json<{ name: string; frequencyPerWeek: number }>();
+    const body = await c.req.json<{ name: string; daysOfWeek: string[] }>();
 
     if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
       return c.json({
@@ -79,24 +97,26 @@ treatmentsRoute.post('/', async (c) => {
     }
 
     if (
-      body.frequencyPerWeek == null ||
-      typeof body.frequencyPerWeek !== 'number' ||
-      !Number.isInteger(body.frequencyPerWeek) ||
-      body.frequencyPerWeek < 1 ||
-      body.frequencyPerWeek > 7
+      !Array.isArray(body.daysOfWeek) ||
+      body.daysOfWeek.length === 0 ||
+      body.daysOfWeek.length > 7 ||
+      !body.daysOfWeek.every((d) => VALID_DAYS.includes(d as DayOfWeek))
     ) {
       return c.json({
         success: false,
-        error: { code: 'INVALID_FREQUENCY', message: 'frequencyPerWeek must be an integer between 1 and 7' },
+        error: { code: 'INVALID_DAYS', message: 'daysOfWeek must be a non-empty array of valid weekday names' },
       }, 400);
     }
+
+    const daysOfWeek = [...new Set(body.daysOfWeek)] as string[];
 
     const [treatment] = await db
       .insert(treatments)
       .values({
         routineId: routine.id,
         name: body.name.trim(),
-        frequencyPerWeek: body.frequencyPerWeek,
+        daysOfWeek,
+        frequencyPerWeek: daysOfWeek.length,
       })
       .returning();
 
@@ -122,8 +142,8 @@ treatmentsRoute.patch('/:id', async (c) => {
       return c.json({ success: false, error: { code: 'NO_ROUTINE', message: 'No routine found' } }, 404);
     }
 
-    const body = await c.req.json<{ name?: string; frequencyPerWeek?: number }>();
-    const updates: Partial<{ name: string; frequencyPerWeek: number; updatedAt: Date }> = {};
+    const body = await c.req.json<{ name?: string; daysOfWeek?: string[] }>();
+    const updates: Partial<{ name: string; daysOfWeek: string[]; frequencyPerWeek: number; updatedAt: Date }> = {};
 
     if (body.name !== undefined) {
       if (typeof body.name !== 'string' || body.name.trim().length === 0) {
@@ -135,19 +155,20 @@ treatmentsRoute.patch('/:id', async (c) => {
       updates.name = body.name.trim();
     }
 
-    if (body.frequencyPerWeek !== undefined) {
+    if (body.daysOfWeek !== undefined) {
       if (
-        typeof body.frequencyPerWeek !== 'number' ||
-        !Number.isInteger(body.frequencyPerWeek) ||
-        body.frequencyPerWeek < 1 ||
-        body.frequencyPerWeek > 7
+        !Array.isArray(body.daysOfWeek) ||
+        body.daysOfWeek.length === 0 ||
+        body.daysOfWeek.length > 7 ||
+        !body.daysOfWeek.every((d) => VALID_DAYS.includes(d as DayOfWeek))
       ) {
         return c.json({
           success: false,
-          error: { code: 'INVALID_FREQUENCY', message: 'frequencyPerWeek must be an integer between 1 and 7' },
+          error: { code: 'INVALID_DAYS', message: 'daysOfWeek must be a non-empty array of valid weekday names' },
         }, 400);
       }
-      updates.frequencyPerWeek = body.frequencyPerWeek;
+      updates.daysOfWeek = [...new Set(body.daysOfWeek)] as string[];
+      updates.frequencyPerWeek = updates.daysOfWeek.length;
     }
 
     if (Object.keys(updates).length === 0) {
