@@ -1,0 +1,1 @@
+ALTER TABLE "treatments" ADD COLUMN "days_of_week" text[] DEFAULT '{}' NOT NULL;

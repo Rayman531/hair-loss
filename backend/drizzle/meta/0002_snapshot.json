@@ -1,6 +1,6 @@
 {
-  "id": "eda48915-fb8f-4d28-8080-4876a50e685f",
-  "prevId": "dfe5509b-053e-4fb4-9bb9-c8547f98337e",
+  "id": "518eaf90-d69e-4f95-8888-55d89d4f351d",
+  "prevId": "eda48915-fb8f-4d28-8080-4876a50e685f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -494,6 +494,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "days_of_week": {
+          "name": "days_of_week",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
         },
         "frequency_per_week": {
           "name": "frequency_per_week",

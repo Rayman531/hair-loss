@@ -22,7 +22,6 @@ export const routines = pgTable('routines', {
 
 export const routinesRelations = relations(routines, ({ many }) => ({
   treatments: many(treatments),
-  sideEffectLogs: many(sideEffectLogs),
 }));
 
 // ─── Treatments ──────────────────────────────────────────────
@@ -72,31 +71,5 @@ export const treatmentLogsRelations = relations(treatmentLogs, ({ one }) => ({
   treatment: one(treatments, {
     fields: [treatmentLogs.treatmentId],
     references: [treatments.id],
-  }),
-}));
-
-// ─── Side Effect Logs ───────────────────────────────────────
-// One entry per routine per week.
-export const sideEffectLogs = pgTable('side_effect_logs', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  routineId: uuid('routine_id')
-    .notNull()
-    .references(() => routines.id, { onDelete: 'cascade' }),
-  weekStartDate: date('week_start_date').notNull(),
-  notes: text('notes').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  uniqueRoutineWeek: unique('side_effect_logs_routine_week_unq').on(
-    table.routineId,
-    table.weekStartDate,
-  ),
-  routineIdx: index('side_effect_logs_routine_id_idx').on(table.routineId),
-  weekStartIdx: index('side_effect_logs_week_start_idx').on(table.weekStartDate),
-}));
-
-export const sideEffectLogsRelations = relations(sideEffectLogs, ({ one }) => ({
-  routine: one(routines, {
-    fields: [sideEffectLogs.routineId],
-    references: [routines.id],
   }),
 }));

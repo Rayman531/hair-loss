@@ -55,15 +55,6 @@ CREATE TABLE "routines" (
 	CONSTRAINT "routines_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
-CREATE TABLE "side_effect_logs" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"routine_id" uuid NOT NULL,
-	"week_start_date" date NOT NULL,
-	"notes" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "side_effect_logs_routine_week_unq" UNIQUE("routine_id","week_start_date")
-);
---> statement-breakpoint
 CREATE TABLE "treatment_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"treatment_id" uuid NOT NULL,
@@ -85,11 +76,8 @@ CREATE TABLE "treatments" (
 ALTER TABLE "onboarding_options" ADD CONSTRAINT "onboarding_options_question_id_onboarding_questions_id_fk" FOREIGN KEY ("question_id") REFERENCES "public"."onboarding_questions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "onboarding_responses" ADD CONSTRAINT "onboarding_responses_question_id_onboarding_questions_id_fk" FOREIGN KEY ("question_id") REFERENCES "public"."onboarding_questions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "onboarding_responses" ADD CONSTRAINT "onboarding_responses_option_id_onboarding_options_id_fk" FOREIGN KEY ("option_id") REFERENCES "public"."onboarding_options"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "side_effect_logs" ADD CONSTRAINT "side_effect_logs_routine_id_routines_id_fk" FOREIGN KEY ("routine_id") REFERENCES "public"."routines"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "treatment_logs" ADD CONSTRAINT "treatment_logs_treatment_id_treatments_id_fk" FOREIGN KEY ("treatment_id") REFERENCES "public"."treatments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "treatments" ADD CONSTRAINT "treatments_routine_id_routines_id_fk" FOREIGN KEY ("routine_id") REFERENCES "public"."routines"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "side_effect_logs_routine_id_idx" ON "side_effect_logs" USING btree ("routine_id");--> statement-breakpoint
-CREATE INDEX "side_effect_logs_week_start_idx" ON "side_effect_logs" USING btree ("week_start_date");--> statement-breakpoint
 CREATE INDEX "treatment_logs_treatment_id_idx" ON "treatment_logs" USING btree ("treatment_id");--> statement-breakpoint
 CREATE INDEX "treatment_logs_date_idx" ON "treatment_logs" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "treatments_routine_id_idx" ON "treatments" USING btree ("routine_id");
