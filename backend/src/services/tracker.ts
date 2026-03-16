@@ -1,21 +1,11 @@
-import { eq, and, gte, lte, inArray } from 'drizzle-orm';
-import { routines, treatments, treatmentLogs, userRoutines } from '../db/schema';
+import { eq, and, gte, lte, inArray, isNull } from 'drizzle-orm';
+import { routines, treatments, treatmentLogs } from '../db/schema';
 import type { DrizzleDB } from '../db/drizzle';
-
-// ─── Treatment label mapping ────────────────────────────────
-
-const TREATMENT_LABELS: Record<string, string> = {
-  minoxidil: 'Minoxidil 5%',
-  finasteride: 'Finasteride 1mg',
-  microneedling: 'Microneedling',
-  ketoconazole: 'Ketoconazole Shampoo',
-  hair_oils: 'Hair Oils',
-};
 
 // ─── Types ──────────────────────────────────────────────────
 
 interface TreatmentConsistency {
-  treatment_id: string;
+  treatment_id: number;
   name: string;
   completed_days: number;
   expected_days: number;
@@ -84,40 +74,6 @@ function getMonthBounds(month: string): { startDate: string; endDate: string; la
 // ─── Service Functions ──────────────────────────────────────
 
 /**
- * Auto-seed the tracker tables from legacy userRoutines data.
- * Creates a `routines` row and corresponding `treatments` rows.
- * Returns the newly created routine or null if no legacy data exists.
- */
-async function seedTrackerFromLegacy(db: DrizzleDB, userId: string) {
-  const legacyRoutines = await db
-    .select()
-    .from(userRoutines)
-    .where(eq(userRoutines.userId, userId));
-
-  if (legacyRoutines.length === 0) return null;
-
-  // Create the tracker routine
-  const [routine] = await db
-    .insert(routines)
-    .values({ userId })
-    .returning();
-
-  // Create a treatment for each legacy routine entry
-  for (const lr of legacyRoutines) {
-    const name = TREATMENT_LABELS[lr.treatmentType] ?? lr.treatmentType;
-    const frequencyPerWeek = lr.daysOfWeek.includes('daily') ? 7 : lr.daysOfWeek.length;
-
-    await db.insert(treatments).values({
-      routineId: routine.id,
-      name,
-      frequencyPerWeek,
-    });
-  }
-
-  return routine;
-}
-
-/**
  * Compute routine summary: journey day + weekly consistency per treatment.
  * Returns null if user has no routine.
  */
@@ -126,18 +82,13 @@ export async function computeRoutineSummary(
   userId: string,
 ): Promise<RoutineSummary | null> {
   // 1. Fetch routine
-  let [routine] = await db
+  const [routine] = await db
     .select()
     .from(routines)
-    .where(eq(routines.userId, userId))
+    .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
     .limit(1);
 
-  // Auto-seed from legacy userRoutines if tracker routine doesn't exist
-  if (!routine) {
-    const seeded = await seedTrackerFromLegacy(db, userId);
-    if (!seeded) return null;
-    routine = seeded;
-  }
+  if (!routine) return null;
 
   // 2. Journey day (day 1 = creation day)
   const now = new Date();
@@ -145,11 +96,11 @@ export async function computeRoutineSummary(
   const diffMs = now.getTime() - created.getTime();
   const journeyDay = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
 
-  // 3. Fetch all treatments for this routine
+  // 3. Fetch all active treatments for this routine
   const userTreatments = await db
     .select()
     .from(treatments)
-    .where(eq(treatments.routineId, routine.id));
+    .where(and(eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)));
 
   if (userTreatments.length === 0) {
     return {
@@ -180,7 +131,7 @@ export async function computeRoutineSummary(
     );
 
   // 5. Count completed days per treatment
-  const completedCounts = new Map<string, number>();
+  const completedCounts = new Map<number, number>();
   for (const log of weekLogs) {
     completedCounts.set(log.treatmentId, (completedCounts.get(log.treatmentId) ?? 0) + 1);
   }
@@ -216,24 +167,20 @@ export async function computeMonthlyHeatmap(
   userId: string,
   month: string,
 ): Promise<HeatmapResult | null> {
-  // 1. Fetch routine (auto-seed handled by computeRoutineSummary if called first)
-  let [routine] = await db
+  // 1. Fetch routine
+  const [routine] = await db
     .select({ id: routines.id })
     .from(routines)
-    .where(eq(routines.userId, userId))
+    .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
     .limit(1);
 
-  if (!routine) {
-    const seeded = await seedTrackerFromLegacy(db, userId);
-    if (!seeded) return null;
-    routine = { id: seeded.id };
-  }
+  if (!routine) return null;
 
   // 2. Fetch all active treatments
   const userTreatments = await db
     .select({ id: treatments.id })
     .from(treatments)
-    .where(eq(treatments.routineId, routine.id));
+    .where(and(eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)));
 
   const totalTreatments = userTreatments.length;
   const { startDate, endDate, lastDay } = getMonthBounds(month);
@@ -269,7 +216,7 @@ export async function computeMonthlyHeatmap(
     );
 
   // 4. Group completed treatments by date (use Set to avoid double-counting)
-  const completedByDate = new Map<string, Set<string>>();
+  const completedByDate = new Map<string, Set<number>>();
   for (const log of monthLogs) {
     if (!completedByDate.has(log.date)) {
       completedByDate.set(log.date, new Set());

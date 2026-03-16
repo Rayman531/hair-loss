@@ -1,6 +1,6 @@
 import {
   pgTable,
-  uuid,
+  bigint,
   text,
   integer,
   boolean,
@@ -14,10 +14,11 @@ import { relations } from 'drizzle-orm';
 // ─── Routines ────────────────────────────────────────────────
 // One active routine per user.
 export const routines = pgTable('routines', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: bigint('id', { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
   userId: text('user_id').notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
 
 export const routinesRelations = relations(routines, ({ many }) => ({
@@ -27,15 +28,16 @@ export const routinesRelations = relations(routines, ({ many }) => ({
 // ─── Treatments ──────────────────────────────────────────────
 // Individual treatments within a routine.
 export const treatments = pgTable('treatments', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  routineId: uuid('routine_id')
+  id: bigint('id', { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
+  routineId: bigint('routine_id', { mode: 'number' })
     .notNull()
     .references(() => routines.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   daysOfWeek: text('days_of_week').array().notNull().default([]),
   frequencyPerWeek: integer('frequency_per_week').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 }, (table) => ({
   routineIdx: index('treatments_routine_id_idx').on(table.routineId),
 }));
@@ -51,13 +53,13 @@ export const treatmentsRelations = relations(treatments, ({ one, many }) => ({
 // ─── Treatment Logs (Adherence) ─────────────────────────────
 // One log per treatment per date.
 export const treatmentLogs = pgTable('treatment_logs', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  treatmentId: uuid('treatment_id')
+  id: bigint('id', { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
+  treatmentId: bigint('treatment_id', { mode: 'number' })
     .notNull()
     .references(() => treatments.id, { onDelete: 'cascade' }),
   date: date('date').notNull(),
   completed: boolean('completed').notNull().default(false),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   uniqueTreatmentDate: unique('treatment_logs_treatment_date_unq').on(
     table.treatmentId,

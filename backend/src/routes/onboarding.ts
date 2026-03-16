@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { createDrizzleConnection } from '../db/drizzle';
 import { onboardingQuestions, onboardingOptions, onboardingResponses } from '../db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { log } from '../lib/logger';
 import type {
   Question,
   QuestionOption,
@@ -63,7 +64,7 @@ onboarding.get('/questions', async (c) => {
 
     return c.json(response);
   } catch (error) {
-    console.error('Error fetching onboarding questions:', error);
+    log.error('onboarding questions fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     const errorResponse: ErrorResponse = {
       success: false,
       error: {
@@ -150,7 +151,7 @@ onboarding.post('/responses', async (c) => {
 
     return c.json(successResponse, 201);
   } catch (error) {
-    console.error('Error submitting onboarding responses:', error);
+    log.error('onboarding responses submit failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     const errorResponse: ErrorResponse = {
       success: false,
       error: {

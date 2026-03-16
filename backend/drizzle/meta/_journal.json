@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1771386969162,
-      "tag": "0000_flowery_marrow",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1772676319989,
-      "tag": "0001_yummy_hawkeye",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773602168644,
-      "tag": "0002_productive_dormammu",
+      "when": 1773605595683,
+      "tag": "0000_public_blazing_skull",
       "breakpoints": true
     }
   ]

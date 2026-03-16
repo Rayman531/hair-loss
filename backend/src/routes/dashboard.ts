@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../db/drizzle';
-import { userRoutines, progressSessions } from '../db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { routines, treatments, progressSessions } from '../db/schema';
+import { eq, and, asc, isNull } from 'drizzle-orm';
+import { log } from '../lib/logger';
 
 type Env = {
   DATABASE_URL: string;
@@ -11,14 +12,14 @@ type Variables = {
   userId: string;
 };
 
-type Routine = typeof userRoutines.$inferSelect;
+type Treatment = typeof treatments.$inferSelect;
 
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
-function getTodaysTreatments(routines: Routine[]): Routine[] {
+function getTodaysTreatments(allTreatments: Treatment[]): Treatment[] {
   const today = DAYS[new Date().getDay()];
-  return routines.filter((r) =>
-    r.daysOfWeek.includes(today) || r.daysOfWeek.includes('daily')
+  return allTreatments.filter((t) =>
+    t.daysOfWeek.length === 0 || t.daysOfWeek.includes(today)
   );
 }
 
@@ -51,34 +52,43 @@ dashboard.use('*', async (c, next) => {
   await next();
 });
 
-// GET /api/dashboard — return all routines for the authenticated user
+// GET /api/dashboard — return dashboard data for the authenticated user
 dashboard.get('/', async (c) => {
   try {
     const db = createDrizzleConnection(c.env.DATABASE_URL);
     const userId = c.get('userId');
 
-    const [routines, progressPhotos] = await Promise.all([
-      db
-        .select()
-        .from(userRoutines)
-        .where(eq(userRoutines.userId, userId))
-        .orderBy(asc(userRoutines.createdAt)),
+    // Get the user's active routine
+    const [routine] = await db
+      .select()
+      .from(routines)
+      .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
+      .limit(1);
+
+    const [userTreatments, progressPhotos] = await Promise.all([
+      routine
+        ? db
+            .select()
+            .from(treatments)
+            .where(and(eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)))
+            .orderBy(asc(treatments.createdAt))
+        : Promise.resolve([]),
       db
         .select({ id: progressSessions.id })
         .from(progressSessions)
-        .where(eq(progressSessions.userId, userId))
+        .where(and(eq(progressSessions.userId, userId), isNull(progressSessions.deletedAt)))
         .limit(1),
     ]);
 
-    const todaysTreatments = getTodaysTreatments(routines);
+    const todaysTreatments = getTodaysTreatments(userTreatments);
 
     const motivationalMessage = getMotivationalMessage();
 
     const progressTrackerInitialized = progressPhotos.length > 0;
 
-    return c.json({ success: true, data: { routines, todaysTreatments, motivationalMessage, progressTrackerInitialized } });
+    return c.json({ success: true, data: { treatments: userTreatments, todaysTreatments, motivationalMessage, progressTrackerInitialized } });
   } catch (error) {
-    console.error('Error fetching dashboard:', error);
+    log.error('dashboard fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: {

@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../db/drizzle';
 import { progressSessions } from '../db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, isNull } from 'drizzle-orm';
 import { uploadToR2, deleteFromR2, extractR2Key, generatePhotoKey, validateR2Env, type R2Env } from '../lib/r2';
+import { log } from '../lib/logger';
 
 type Env = {
   DATABASE_URL: string;
@@ -35,7 +36,7 @@ progress.post('/upload', async (c) => {
     // Validate R2 env vars are present
     const r2Check = validateR2Env(c.env);
     if (!r2Check.valid) {
-      console.error(`[Progress] Missing R2 env vars: ${r2Check.missing.join(', ')}`);
+      log.error('missing R2 env vars', { missing: r2Check.missing });
       return c.json({
         success: false,
         error: {
@@ -57,7 +58,7 @@ progress.post('/upload', async (c) => {
 
     for (const angle of REQUIRED_ANGLES) {
       const file = formData.get(angle);
-      console.log(`[Progress] Angle ${angle}: type=${typeof file}, isFile=${file instanceof File}, isBlob=${file instanceof Blob}`);
+      log.info('progress upload angle', { angle, type: typeof file, isFile: file instanceof File, isBlob: file instanceof Blob });
       if (file instanceof Blob && file.size > 0) {
         // Accept both File and Blob — convert Blob to File if needed
         const asFile = file instanceof File
@@ -80,7 +81,7 @@ progress.post('/upload', async (c) => {
     }
 
     // Upload all 4 images to R2
-    console.log(`[Progress] Starting upload for user ${userId} (4 images)`);
+    log.info('progress upload starting', { userId, imageCount: 4 });
     const urls: Record<Angle, string> = {} as Record<Angle, string>;
 
     await Promise.all(
@@ -104,11 +105,11 @@ progress.post('/upload', async (c) => {
       })
       .returning();
 
-    console.log(`[Progress] Session created: ${session.id} for user ${userId}`);
+    log.info('progress session created', { sessionId: session.id, userId });
 
     return c.json({ success: true, data: session }, 201);
   } catch (error) {
-    console.error('Error uploading progress photos:', error);
+    log.error('progress upload failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: {
@@ -129,12 +130,12 @@ progress.get('/', async (c) => {
     const sessions = await db
       .select()
       .from(progressSessions)
-      .where(eq(progressSessions.userId, userId))
+      .where(and(eq(progressSessions.userId, userId), isNull(progressSessions.deletedAt)))
       .orderBy(desc(progressSessions.createdAt));
 
     return c.json({ success: true, data: sessions });
   } catch (error) {
-    console.error('Error fetching progress sessions:', error);
+    log.error('progress sessions fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: {
@@ -146,12 +147,12 @@ progress.get('/', async (c) => {
   }
 });
 
-// DELETE /api/progress/:id — delete a session and its R2 photos
+// DELETE /api/progress/:id — soft-delete a session and remove its R2 photos
 progress.delete('/:id', async (c) => {
   try {
     const db = createDrizzleConnection(c.env.DATABASE_URL);
     const userId = c.get('userId');
-    const sessionId = c.req.param('id');
+    const sessionId = Number(c.req.param('id'));
 
     // Fetch the session and verify ownership
     const [session] = await db
@@ -161,6 +162,7 @@ progress.delete('/:id', async (c) => {
         and(
           eq(progressSessions.id, sessionId),
           eq(progressSessions.userId, userId),
+          isNull(progressSessions.deletedAt),
         ),
       );
 
@@ -189,14 +191,17 @@ progress.delete('/:id', async (c) => {
 
     const failedDeletes = deleteResults.filter((r) => r.status === 'rejected');
     if (failedDeletes.length > 0) {
-      console.error(`[Progress] ${failedDeletes.length} R2 deletions failed for session ${sessionId}:`,
-        failedDeletes.map((r) => (r as PromiseRejectedResult).reason),
-      );
+      log.warn('R2 deletions partially failed', {
+        sessionId,
+        failedCount: failedDeletes.length,
+        reasons: failedDeletes.map((r) => String((r as PromiseRejectedResult).reason)),
+      });
     }
 
-    // Delete the database record
+    // Soft-delete the database record
     await db
-      .delete(progressSessions)
+      .update(progressSessions)
+      .set({ deletedAt: new Date() })
       .where(
         and(
           eq(progressSessions.id, sessionId),
@@ -204,11 +209,11 @@ progress.delete('/:id', async (c) => {
         ),
       );
 
-    console.log(`[Progress] Session deleted: ${sessionId} for user ${userId}`);
+    log.info('progress session deleted', { sessionId, userId });
 
     return c.json({ success: true, data: { id: sessionId } });
   } catch (error) {
-    console.error('Error deleting progress session:', error);
+    log.error('progress session delete failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: {

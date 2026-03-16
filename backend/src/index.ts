@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { log } from './lib/logger'
 import onboarding from './routes/onboarding'
-import routine from './routes/routine'
 import dashboard from './routes/dashboard'
 import progress from './routes/progress'
 import tracker from './routes/tracker'
@@ -21,26 +21,49 @@ const app = new Hono<{ Bindings: Env }>()
 // Enable CORS for all origins (you can restrict this in production)
 app.use('/*', cors())
 
+// Request logging middleware
+app.use('/*', async (c, next) => {
+  const start = Date.now();
+  const method = c.req.method;
+  const path = c.req.path;
+  const userId = c.req.header('X-User-Id') ?? 'anon';
+
+  await next();
+
+  const ms = Date.now() - start;
+  const status = c.res.status;
+
+  log.info('request', { method, path, status, ms, userId });
+})
+
+// Global error handler
+app.onError((err, c) => {
+  const method = c.req.method;
+  const path = c.req.path;
+  const userId = c.req.header('X-User-Id') ?? 'anon';
+
+  log.error('unhandled error', {
+    method,
+    path,
+    userId,
+    error: err.message,
+    stack: err.stack,
+  });
+
+  return c.json({
+    success: false,
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
+  }, 500);
+})
+
 app.get('/', (c) => {
   return c.text('Hair Loss!')
 })
 
-// Mount onboarding routes
 app.route('/api/onboarding', onboarding)
-
-// Mount routine routes
-app.route('/api/routine', routine)
-
-// Mount dashboard routes
 app.route('/api/dashboard', dashboard)
-
-// Mount progress photo routes
 app.route('/api/progress', progress)
-
-// Mount routine tracker routes
 app.route('/api/tracker', tracker)
-
-// Mount feedback routes
 app.route('/api/feedback', feedbackRoutes)
 
 export default app

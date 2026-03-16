@@ -9,7 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import React from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
@@ -81,14 +81,14 @@ export default function RoutineTrackerSetupScreen() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(API_ENDPOINTS.ROUTINE_EXISTS, {
+      const response = await fetch(API_ENDPOINTS.TRACKER_ROUTINE, {
         headers: { 'X-User-Id': userId ?? '' },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
       const data = await response.json();
-      if (data.hasRoutine) {
+      if (data.success && data.data) {
         router.replace('/(tabs)');
         return;
       }
@@ -143,17 +143,6 @@ export default function RoutineTrackerSetupScreen() {
     }
   };
 
-  const to24Hour = useCallback((): string => {
-    let h = parseInt(hour, 10) || 0;
-    if (period === 'AM') {
-      if (h === 12) h = 0;
-    } else {
-      if (h !== 12) h += 12;
-    }
-    const m = parseInt(minute, 10) || 0;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  }, [hour, minute, period]);
-
   const ensureTrackerRoutine = async (headers: Record<string, string>): Promise<string | null> => {
     if (trackerRoutineId) return trackerRoutineId;
 
@@ -199,13 +188,19 @@ export default function RoutineTrackerSetupScreen() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      // Save to legacy routine system
-      const response = await fetch(API_ENDPOINTS.ROUTINE, {
+      // Ensure tracker routine exists, then save treatment
+      const routineId = await ensureTrackerRoutine(headers);
+      if (!routineId) {
+        setError('Failed to create routine');
+        clearTimeout(timeoutId);
+        return;
+      }
+
+      const response = await fetch(API_ENDPOINTS.TRACKER_TREATMENTS, {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          treatmentType: treatment,
-          timeOfDay: to24Hour(),
+          name: treatmentInfo?.label ?? treatment,
           daysOfWeek: Array.from(selectedDays),
         }),
         signal: controller.signal,
@@ -217,19 +212,6 @@ export default function RoutineTrackerSetupScreen() {
       if (!response.ok) {
         setError(data.error?.message || 'Failed to save treatment');
         return;
-      }
-
-      // Also save to tracker system (routine + treatment)
-      const routineId = await ensureTrackerRoutine(headers);
-      if (routineId) {
-        await fetch(API_ENDPOINTS.TRACKER_TREATMENTS, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            name: treatmentInfo?.label ?? treatment,
-            daysOfWeek: Array.from(selectedDays),
-          }),
-        });
       }
 
       // Mark saved

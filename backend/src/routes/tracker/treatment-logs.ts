@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../../db/drizzle';
 import { routines, treatments, treatmentLogs } from '../../db/schema';
-import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, isNull } from 'drizzle-orm';
+import { log } from '../../lib/logger';
 
 type Env = { DATABASE_URL: string };
 type Variables = { userId: string };
@@ -37,7 +38,7 @@ treatmentLogsRoute.get('/', async (c) => {
     const [routine] = await db
       .select({ id: routines.id })
       .from(routines)
-      .where(eq(routines.userId, userId))
+      .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
       .limit(1);
 
     if (!routine) {
@@ -52,7 +53,7 @@ treatmentLogsRoute.get('/', async (c) => {
     const lastDay = new Date(year, mon, 0).getDate();
     const endDate = `${month}-${String(lastDay).padStart(2, '0')}`;
 
-    // Get all treatment logs for this routine's treatments in the month
+    // Get all treatment logs for this routine's active treatments in the month
     const logs = await db
       .select({
         id: treatmentLogs.id,
@@ -67,6 +68,7 @@ treatmentLogsRoute.get('/', async (c) => {
       .where(
         and(
           eq(treatments.routineId, routine.id),
+          isNull(treatments.deletedAt),
           gte(treatmentLogs.date, startDate),
           lte(treatmentLogs.date, endDate),
         ),
@@ -74,7 +76,7 @@ treatmentLogsRoute.get('/', async (c) => {
 
     return c.json({ success: true, data: logs });
   } catch (error) {
-    console.error('Error fetching treatment logs:', error);
+    log.error('treatment logs fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'FETCH_LOGS_ERROR', message: 'Failed to fetch treatment logs', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -91,7 +93,7 @@ treatmentLogsRoute.post('/', async (c) => {
     const userId = c.get('userId');
 
     const body = await c.req.json<{
-      treatmentId: string;
+      treatmentId: number;
       date: string;
       completed: boolean;
     }>();
@@ -104,10 +106,10 @@ treatmentLogsRoute.post('/', async (c) => {
       }, 400);
     }
 
-    if (!body.treatmentId) {
+    if (!body.treatmentId || typeof body.treatmentId !== 'number') {
       return c.json({
         success: false,
-        error: { code: 'INVALID_TREATMENT_ID', message: 'treatmentId is required' },
+        error: { code: 'INVALID_TREATMENT_ID', message: 'treatmentId is required and must be a number' },
       }, 400);
     }
 
@@ -122,7 +124,7 @@ treatmentLogsRoute.post('/', async (c) => {
     const [routine] = await db
       .select({ id: routines.id })
       .from(routines)
-      .where(eq(routines.userId, userId))
+      .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
       .limit(1);
 
     if (!routine) {
@@ -135,7 +137,7 @@ treatmentLogsRoute.post('/', async (c) => {
     const [treatment] = await db
       .select({ id: treatments.id })
       .from(treatments)
-      .where(and(eq(treatments.id, body.treatmentId), eq(treatments.routineId, routine.id)))
+      .where(and(eq(treatments.id, body.treatmentId), eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)))
       .limit(1);
 
     if (!treatment) {
@@ -161,7 +163,7 @@ treatmentLogsRoute.post('/', async (c) => {
 
     return c.json({ success: true, data: log }, 201);
   } catch (error) {
-    console.error('Error creating treatment log:', error);
+    log.error('treatment log create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'CREATE_LOG_ERROR', message: 'Failed to create treatment log', details: error instanceof Error ? error.message : 'Unknown error' },

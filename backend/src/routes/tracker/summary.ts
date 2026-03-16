@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../../db/drizzle';
 import { computeRoutineSummary } from '../../services/tracker';
+import { log } from '../../lib/logger';
 
 type Env = { DATABASE_URL: string };
 type Variables = { userId: string };
@@ -34,7 +35,7 @@ summaryRoute.get('/', async (c) => {
 
     return c.json({ success: true, data: summary });
   } catch (error) {
-    console.error('Error computing routine summary:', error);
+    log.error('routine summary compute failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'SUMMARY_ERROR', message: 'Failed to compute routine summary', details: error instanceof Error ? error.message : 'Unknown error' },

@@ -12,7 +12,7 @@ export async function query<T = any>(
   params?: any[]
 ): Promise<T[]> {
   try {
-    const result = await sql(queryText, params);
+    const result = await sql(queryText as unknown as TemplateStringsArray, ...(params ?? []));
     return result as T[];
   } catch (error) {
     console.error('Database query error:', error);

@@ -1,34 +1,38 @@
-import { pgTable, serial, text, integer, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { pgTable, bigint, text, integer, timestamp, unique, index } from 'drizzle-orm/pg-core';
 
 export const onboardingQuestions = pgTable('onboarding_questions', {
-  id: serial('id').primaryKey(),
+  id: bigint('id', { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
   questionText: text('question_text').notNull(),
   questionOrder: integer('question_order').notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const onboardingOptions = pgTable('onboarding_options', {
-  id: serial('id').primaryKey(),
-  questionId: integer('question_id')
+  id: bigint('id', { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
+  questionId: bigint('question_id', { mode: 'number' })
     .notNull()
     .references(() => onboardingQuestions.id, { onDelete: 'cascade' }),
   optionText: text('option_text').notNull(),
   optionOrder: integer('option_order').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   uniqueQuestionOption: unique().on(table.questionId, table.optionOrder),
+  questionIdx: index('onboarding_option_question_id_idx').on(table.questionId),
 }));
 
 export const onboardingResponses = pgTable('onboarding_responses', {
-  id: serial('id').primaryKey(),
-  userId: uuid('user_id'),
+  id: bigint('id', { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
+  userId: text('user_id'),
   sessionId: text('session_id'),
-  questionId: integer('question_id')
+  questionId: bigint('question_id', { mode: 'number' })
     .notNull()
-    .references(() => onboardingQuestions.id),
-  optionId: integer('option_id')
+    .references(() => onboardingQuestions.id, { onDelete: 'cascade' }),
+  optionId: bigint('option_id', { mode: 'number' })
     .notNull()
-    .references(() => onboardingOptions.id),
-  answeredAt: timestamp('answered_at').defaultNow().notNull(),
-});
+    .references(() => onboardingOptions.id, { onDelete: 'cascade' }),
+  answeredAt: timestamp('answered_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  questionIdx: index('onboarding_response_question_id_idx').on(table.questionId),
+  optionIdx: index('onboarding_response_option_id_idx').on(table.optionId),
+}));

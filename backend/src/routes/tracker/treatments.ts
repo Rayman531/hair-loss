@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../../db/drizzle';
 import { routines, treatments } from '../../db/schema';
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, and, asc, isNull } from 'drizzle-orm';
+import { log } from '../../lib/logger';
 
 type Env = { DATABASE_URL: string };
 type Variables = { userId: string };
@@ -26,7 +27,7 @@ async function getUserRoutine(db: ReturnType<typeof createDrizzleConnection>, us
   const [routine] = await db
     .select()
     .from(routines)
-    .where(eq(routines.userId, userId))
+    .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
     .limit(1);
   return routine ?? null;
 }
@@ -48,7 +49,7 @@ treatmentsRoute.get('/', async (c) => {
     let query = db
       .select()
       .from(treatments)
-      .where(eq(treatments.routineId, routine.id))
+      .where(and(eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)))
       .orderBy(asc(treatments.createdAt));
 
     const result = await query;
@@ -65,7 +66,7 @@ treatmentsRoute.get('/', async (c) => {
 
     return c.json({ success: true, data: result });
   } catch (error) {
-    console.error('Error fetching treatments:', error);
+    log.error('treatments fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'FETCH_TREATMENTS_ERROR', message: 'Failed to fetch treatments', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -122,7 +123,7 @@ treatmentsRoute.post('/', async (c) => {
 
     return c.json({ success: true, data: treatment }, 201);
   } catch (error) {
-    console.error('Error creating treatment:', error);
+    log.error('treatment create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'CREATE_TREATMENT_ERROR', message: 'Failed to create treatment', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -135,7 +136,7 @@ treatmentsRoute.patch('/:id', async (c) => {
   try {
     const db = createDrizzleConnection(c.env.DATABASE_URL);
     const userId = c.get('userId');
-    const treatmentId = c.req.param('id');
+    const treatmentId = Number(c.req.param('id'));
 
     const routine = await getUserRoutine(db, userId);
     if (!routine) {
@@ -183,7 +184,7 @@ treatmentsRoute.patch('/:id', async (c) => {
     const [updated] = await db
       .update(treatments)
       .set(updates)
-      .where(and(eq(treatments.id, treatmentId), eq(treatments.routineId, routine.id)))
+      .where(and(eq(treatments.id, treatmentId), eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)))
       .returning();
 
     if (!updated) {
@@ -192,7 +193,7 @@ treatmentsRoute.patch('/:id', async (c) => {
 
     return c.json({ success: true, data: updated });
   } catch (error) {
-    console.error('Error updating treatment:', error);
+    log.error('treatment update failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'UPDATE_TREATMENT_ERROR', message: 'Failed to update treatment', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -200,12 +201,12 @@ treatmentsRoute.patch('/:id', async (c) => {
   }
 });
 
-// DELETE /api/tracker/treatments/:id — delete a treatment (cascades to logs)
+// DELETE /api/tracker/treatments/:id — soft-delete a treatment
 treatmentsRoute.delete('/:id', async (c) => {
   try {
     const db = createDrizzleConnection(c.env.DATABASE_URL);
     const userId = c.get('userId');
-    const treatmentId = c.req.param('id');
+    const treatmentId = Number(c.req.param('id'));
 
     const routine = await getUserRoutine(db, userId);
     if (!routine) {
@@ -213,8 +214,9 @@ treatmentsRoute.delete('/:id', async (c) => {
     }
 
     const [deleted] = await db
-      .delete(treatments)
-      .where(and(eq(treatments.id, treatmentId), eq(treatments.routineId, routine.id)))
+      .update(treatments)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(treatments.id, treatmentId), eq(treatments.routineId, routine.id), isNull(treatments.deletedAt)))
       .returning({ id: treatments.id });
 
     if (!deleted) {
@@ -223,7 +225,7 @@ treatmentsRoute.delete('/:id', async (c) => {
 
     return c.json({ success: true, data: { id: deleted.id } });
   } catch (error) {
-    console.error('Error deleting treatment:', error);
+    log.error('treatment delete failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'DELETE_TREATMENT_ERROR', message: 'Failed to delete treatment', details: error instanceof Error ? error.message : 'Unknown error' },

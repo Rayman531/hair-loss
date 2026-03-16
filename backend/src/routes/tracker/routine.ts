@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../../db/drizzle';
 import { routines } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
+import { log } from '../../lib/logger';
 
 type Env = { DATABASE_URL: string };
 type Variables = { userId: string };
@@ -27,7 +28,7 @@ routineTracker.get('/', async (c) => {
     const [routine] = await db
       .select()
       .from(routines)
-      .where(eq(routines.userId, userId))
+      .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
       .limit(1);
 
     if (!routine) {
@@ -36,7 +37,7 @@ routineTracker.get('/', async (c) => {
 
     return c.json({ success: true, data: routine });
   } catch (error) {
-    console.error('Error fetching routine:', error);
+    log.error('routine fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'FETCH_ROUTINE_ERROR', message: 'Failed to fetch routine', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -54,7 +55,7 @@ routineTracker.post('/', async (c) => {
     const [existing] = await db
       .select({ id: routines.id })
       .from(routines)
-      .where(eq(routines.userId, userId))
+      .where(and(eq(routines.userId, userId), isNull(routines.deletedAt)))
       .limit(1);
 
     if (existing) {
@@ -71,7 +72,7 @@ routineTracker.post('/', async (c) => {
 
     return c.json({ success: true, data: routine }, 201);
   } catch (error) {
-    console.error('Error creating routine:', error);
+    log.error('routine create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'CREATE_ROUTINE_ERROR', message: 'Failed to create routine', details: error instanceof Error ? error.message : 'Unknown error' },

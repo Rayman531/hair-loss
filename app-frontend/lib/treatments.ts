@@ -35,7 +35,7 @@ export const TREATMENTS: Treatment[] = [
     name: 'Finasteride',
     emoji: '💊',
     icon: FinasterideIcon,
-    color: '#FFF0E0',
+    color: '#F5EDDF',
     subtitle: 'Oral - Direct DHT Suppression',
     ratings: [
       { label: 'Effectiveness', value: '9/10', numericValue: 9, maxValue: 10 },
@@ -56,7 +56,7 @@ export const TREATMENTS: Treatment[] = [
     emoji: '💧',
     icon: MinoxidilIcon,
     iconSize: 45,
-    color: '#E8F0FB',
+    color: '#F5EDDF',
     subtitle: 'Topical or Oral - Growth Stimulation',
     ratings: [
       { label: 'Effectiveness', value: '8/10', numericValue: 8, maxValue: 10 },
@@ -77,7 +77,7 @@ export const TREATMENTS: Treatment[] = [
     emoji: '🪡',
     icon: MicroneedlingIcon,
     iconSize: 52,
-    color: '#F0E8F5',
+    color: '#F5EDDF',
     subtitle: 'Wound Healing + Growth Factor Activation',
     ratings: [
       { label: 'Effectiveness', value: '7.5\u20139/10', numericValue: 8.25, maxValue: 10 },
@@ -97,7 +97,7 @@ export const TREATMENTS: Treatment[] = [
     name: 'Ketoconazole',
     emoji: '🧴',
     icon: KetoconazoleIcon,
-    color: '#E8F2EC',
+    color: '#F5EDDF',
     subtitle: 'Nizoral Shampoo - Anti-Androgen + Anti-Inflammatory',
     ratings: [
       { label: 'Effectiveness', value: '5.5/10', numericValue: 5.5, maxValue: 10 },
@@ -116,7 +116,7 @@ export const TREATMENTS: Treatment[] = [
     name: 'Rosemary Oil',
     emoji: '🌿',
     icon: RosemaryOilIcon,
-    color: '#E8F2EC',
+    color: '#F5EDDF',
     subtitle: 'Mild Growth Stimulation + Anti-Inflammatory',
     ratings: [
       { label: 'Effectiveness', value: '4.5/10', numericValue: 4.5, maxValue: 10 },
@@ -136,7 +136,7 @@ export const TREATMENTS: Treatment[] = [
     name: 'Pumpkin Seed Oil',
     emoji: '🎃',
     icon: PumpkinSeedOilIcon,
-    color: '#FFF6E3',
+    color: '#F5EDDF',
     subtitle: 'Mild 5-Alpha Reductase Inhibition',
     ratings: [
       { label: 'Effectiveness', value: '4/10', numericValue: 4, maxValue: 10 },
@@ -155,7 +155,7 @@ export const TREATMENTS: Treatment[] = [
     name: 'Scalp Massagers',
     emoji: '✋',
     icon: ScalpMassagerIcon,
-    color: '#FCE8EE',
+    color: '#F5EDDF',
     subtitle: 'Mechanical Stimulation + Increased Blood Flow',
     ratings: [
       { label: 'Effectiveness', value: '3\u20135/10', numericValue: 4, maxValue: 10 },

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../../db/drizzle';
 import { computeMonthlyHeatmap } from '../../services/tracker';
+import { log } from '../../lib/logger';
 
 type Env = { DATABASE_URL: string };
 type Variables = { userId: string };
@@ -42,7 +43,7 @@ heatmapRoute.get('/', async (c) => {
 
     return c.json({ success: true, data: heatmap });
   } catch (error) {
-    console.error('Error computing heatmap:', error);
+    log.error('heatmap compute failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
       error: { code: 'HEATMAP_ERROR', message: 'Failed to compute heatmap', details: error instanceof Error ? error.message : 'Unknown error' },
