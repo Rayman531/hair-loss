@@ -7,6 +7,7 @@ import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
 import { tokenCache } from '@/lib/token-cache';
 import { ThemeContextProvider, useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
+import { useNotifications } from '@/hooks/useNotifications';
 import React from 'react';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -22,6 +23,7 @@ export const unstable_settings = {
 function RootNavigator() {
   const { colorScheme } = useThemeContext();
   const colors = Colors[colorScheme];
+  useNotifications();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

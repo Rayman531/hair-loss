@@ -63,9 +63,12 @@ type DashboardData = {
 const TREATMENT_LABELS: Record<string, string> = {
   minoxidil: 'Minoxidil 5%',
   finasteride: 'Finasteride 1mg',
+  dutasteride: 'Dutasteride 0.5mg',
   microneedling: 'Microneedling',
   ketoconazole: 'Ketoconazole Shampoo',
-  hair_oils: 'Hair Oils',
+  pumpkin_seed_oil: 'Pumpkin Seed Oil',
+  rosemary_oil: 'Rosemary Oil',
+  scalp_massage: 'Scalp Massage',
 };
 
 
@@ -277,8 +280,11 @@ export default function DashboardScreen() {
           ))}
         </View>
       ) : (
-        <View style={[styles.treatmentCard, themed.treatmentCard]}>
-          <Text style={[styles.routineText, themed.routineText]}>No treatments scheduled today.</Text>
+        <View style={[styles.emptyRoutineCard, themed.treatmentCard]}>
+          <Text style={[styles.routineText, themed.routineText]}>No treatments scheduled for today.</Text>
+          <Text style={[styles.routineSubtext, themed.routineText]}>
+            Head to the routine tracker to add treatments to your routine.
+          </Text>
         </View>
       )}
 
@@ -407,8 +413,21 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
   },
+  emptyRoutineCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'flex-start',
+    marginBottom: 28,
+  },
   routineText: {
-    fontSize: 15,
+    fontSize: 14,
+    textAlign: 'left',
+  },
+  routineSubtext: {
+    fontSize: 14,
+    marginTop: 4,
+    textAlign: 'left',
   },
   checkbox: {
     width: 24,

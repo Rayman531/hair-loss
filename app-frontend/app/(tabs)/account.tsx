@@ -15,10 +15,15 @@ import {
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '@/constants/api';
 import { useRouter } from 'expo-router';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
+import {
+  fetchNotificationPreferences,
+  updateNotificationPreferences,
+  type NotificationPreferences,
+} from '@/lib/api/notifications';
 
 export default function AccountScreen() {
   const { user } = useUser();
@@ -33,6 +38,61 @@ export default function AccountScreen() {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Notification preferences
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [reminderHour, setReminderHour] = useState(9);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const loadNotifPrefs = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const prefs = await fetchNotificationPreferences(user.id);
+      setNotifEnabled(prefs.enabled);
+      setReminderHour(prefs.reminderHour);
+    } catch {
+      // Use defaults
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadNotifPrefs();
+  }, [loadNotifPrefs]);
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotifEnabled(value);
+    if (!user?.id) return;
+    try {
+      await updateNotificationPreferences(user.id, {
+        enabled: value,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    } catch {
+      setNotifEnabled(!value); // Revert on failure
+    }
+  };
+
+  const handleSelectTime = async (hour: number) => {
+    setReminderHour(hour);
+    setShowTimePicker(false);
+    if (!user?.id) return;
+    try {
+      await updateNotificationPreferences(user.id, {
+        reminderHour: hour,
+        reminderMinute: 0,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    } catch {
+      // Revert silently
+      loadNotifPrefs();
+    }
+  };
+
+  const formatHour = (hour: number) => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const h = hour % 12 || 12;
+    return `${h}:00 ${period}`;
+  };
 
   const themed = useMemo(() => ({
     screen: { backgroundColor: colors.background },
@@ -169,6 +229,77 @@ export default function AccountScreen() {
           </Pressable>
         </View>
       </View>
+
+      {/* Notifications */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Notifications</Text>
+        <View style={[styles.card, themed.card]}>
+          <View style={styles.row}>
+            <Text style={styles.rowIcon}>🔔</Text>
+            <Text style={[styles.rowLabel, themed.rowLabel]}>Daily Reminders</Text>
+            <Switch
+              value={notifEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: colors.switchTrackOff, true: colors.switchTrackOn }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {notifEnabled && (
+            <>
+              <View style={[styles.rowDivider, themed.divider]} />
+              <Pressable style={styles.row} onPress={() => setShowTimePicker(true)}>
+                <Text style={styles.rowIcon}>🕐</Text>
+                <Text style={[styles.rowLabel, themed.rowLabel]}>Reminder Time</Text>
+                <Text style={[styles.timeValue, { color: colors.accent }]}>{formatHour(reminderHour)}</Text>
+                <Text style={styles.rowChevron}>›</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* Time Picker Modal */}
+      <Modal
+        visible={showTimePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <View style={[styles.modalContainer, themed.modalBg]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, themed.modalTitle]}>Select Reminder Time</Text>
+            <Pressable onPress={() => setShowTimePicker(false)}>
+              <Text style={styles.modalClose}>Cancel</Text>
+            </Pressable>
+          </View>
+          <ScrollView>
+            {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+              <Pressable
+                key={hour}
+                style={[
+                  styles.timeOption,
+                  hour === reminderHour && { backgroundColor: colors.accent + '20' },
+                ]}
+                onPress={() => handleSelectTime(hour)}
+              >
+                <Text
+                  style={[
+                    styles.timeOptionText,
+                    { color: colors.text },
+                    hour === reminderHour && { color: colors.accent, fontWeight: '700' },
+                  ]}
+                >
+                  {formatHour(hour)}
+                </Text>
+                {hour === reminderHour && (
+                  <Text style={{ color: colors.accent, fontSize: 16 }}>✓</Text>
+                )}
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Sign Out */}
       <Pressable
@@ -379,5 +510,22 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  timeValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  timeOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 2,
+  },
+  timeOptionText: {
+    fontSize: 17,
   },
 });

@@ -17,24 +17,36 @@ import { API_ENDPOINTS } from '../../constants/api';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
+import { DutasterideIcon } from '@/components/icons/DutasterideIcon';
+import { FinasterideIcon } from '@/components/icons/FinasterideIcon';
+import { MinoxidilIcon } from '@/components/icons/MinoxidilIcon';
+import { MicroneedlingIcon } from '@/components/icons/MicroneedlingIcon';
+import { KetoconazoleIcon } from '@/components/icons/KetoconazoleIcon';
+import { PumpkinSeedOilIcon } from '@/components/icons/PumpkinSeedOilIcon';
+import { RosemaryOilIcon } from '@/components/icons/RosemaryOilIcon';
+import { ScalpMassagerIcon } from '@/components/icons/ScalpMassagerIcon';
 
 // ─── Constants ───────────────────────────────────────────────
 
-type TreatmentId = 'minoxidil' | 'finasteride' | 'microneedling' | 'ketoconazole' | 'hair_oils';
+type TreatmentId = 'minoxidil' | 'finasteride' | 'dutasteride' | 'microneedling' | 'ketoconazole' | 'pumpkin_seed_oil' | 'rosemary_oil' | 'scalp_massage';
 
 interface TreatmentOption {
   id: TreatmentId;
   label: string;
   emoji: string;
+  icon?: React.ComponentType<{ size?: number }>;
   tip: string;
 }
 
 const TREATMENTS: TreatmentOption[] = [
-  { id: 'minoxidil', label: 'Minoxidil', emoji: '🧴', tip: 'Studies recommend taking Minoxidil once or twice daily' },
-  { id: 'finasteride', label: 'Finasteride', emoji: '💊', tip: 'Studies recommend taking Finasteride once daily' },
-  { id: 'microneedling', label: 'Microneedling', emoji: '🪡', tip: 'Studies recommend microneedling once or twice a week' },
-  { id: 'ketoconazole', label: 'Ketoconazole', emoji: '🧴', tip: 'Studies recommend using Ketoconazole 2-3 times a week' },
-  { id: 'hair_oils', label: 'Hair Oils', emoji: '🫧', tip: 'Apply hair oils as part of your daily routine' },
+  { id: 'minoxidil', label: 'Minoxidil', emoji: '💧', icon: MinoxidilIcon, tip: 'Studies recommend taking Minoxidil once or twice daily' },
+  { id: 'finasteride', label: 'Finasteride', emoji: '💊', icon: FinasterideIcon, tip: 'Studies recommend taking Finasteride once daily' },
+  { id: 'dutasteride', label: 'Dutasteride', emoji: '💊', icon: DutasterideIcon, tip: 'Studies recommend taking Dutasteride once daily' },
+  { id: 'microneedling', label: 'Microneedling', emoji: '🪡', icon: MicroneedlingIcon, tip: 'Studies recommend microneedling once or twice a week' },
+  { id: 'ketoconazole', label: 'Ketoconazole', emoji: '🧴', icon: KetoconazoleIcon, tip: 'Studies recommend using Ketoconazole 2-3 times a week' },
+  { id: 'pumpkin_seed_oil', label: 'Pumpkin Seed Oil', emoji: '🎃', icon: PumpkinSeedOilIcon, tip: 'Studies suggest taking pumpkin seed oil daily as a supplement' },
+  { id: 'rosemary_oil', label: 'Rosemary Oil', emoji: '🌿', icon: RosemaryOilIcon, tip: 'Studies recommend applying rosemary oil to the scalp daily' },
+  { id: 'scalp_massage', label: 'Scalp Massage', emoji: '✋', icon: ScalpMassagerIcon, tip: 'Studies recommend scalp massage for 5-10 minutes daily' },
 ];
 
 const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -43,7 +55,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'] as const;
 interface ExistingTreatment {
   id: string;
   name: string;
-  frequencyPerWeek: number;
+  daysOfWeek: string[];
 }
 
 interface EditableTreatment {
@@ -89,14 +101,16 @@ export default function EditRoutineScreen() {
         const existing: ExistingTreatment[] = data.data.map((t: any) => ({
           id: t.id,
           name: t.name,
-          frequencyPerWeek: t.frequencyPerWeek,
+          daysOfWeek: Array.isArray(t.daysOfWeek) && t.daysOfWeek.length > 0
+            ? t.daysOfWeek
+            : [...ALL_DAYS],
         }));
         setOriginalTreatments(existing);
         setTreatments(
           existing.map((t) => ({
             serverId: t.id,
             name: t.name,
-            selectedDays: new Set(ALL_DAYS.slice(0, Math.min(t.frequencyPerWeek, 7))),
+            selectedDays: new Set(t.daysOfWeek),
             deleted: false,
           }))
         );
@@ -208,15 +222,17 @@ export default function EditRoutineScreen() {
             })
           );
         } else if (!treatment.deleted && treatment.serverId) {
-          // PATCH updated treatments (check if frequency changed)
+          // PATCH updated treatments (check if days changed)
           const original = originalTreatments.find((o) => o.id === treatment.serverId);
-          const newFreq = treatment.selectedDays.size;
-          if (original && original.frequencyPerWeek !== newFreq) {
+          const newDays = Array.from(treatment.selectedDays);
+          const originalDaysSet = new Set(original?.daysOfWeek ?? []);
+          const daysChanged = newDays.length !== originalDaysSet.size || newDays.some((d) => !originalDaysSet.has(d));
+          if (daysChanged) {
             promises.push(
               fetch(`${API_ENDPOINTS.TRACKER_TREATMENTS}/${treatment.serverId}`, {
                 method: 'PATCH',
                 headers,
-                body: JSON.stringify({ frequencyPerWeek: newFreq }),
+                body: JSON.stringify({ daysOfWeek: newDays }),
               })
             );
           }
@@ -228,7 +244,7 @@ export default function EditRoutineScreen() {
               headers,
               body: JSON.stringify({
                 name: treatment.name,
-                frequencyPerWeek: treatment.selectedDays.size,
+                daysOfWeek: Array.from(treatment.selectedDays),
               }),
             })
           );
@@ -296,7 +312,9 @@ export default function EditRoutineScreen() {
                 onPress={() => addTreatment(t)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.treatmentEmoji}>{t.emoji}</Text>
+                <View style={styles.treatmentIconContainer}>
+                  {t.icon ? <t.icon size={28} /> : <Text style={styles.treatmentEmoji}>{t.emoji}</Text>}
+                </View>
                 <Text style={[styles.treatmentLabel, { color: colors.text }]}>{t.label}</Text>
               </TouchableOpacity>
             ))}
@@ -338,7 +356,9 @@ export default function EditRoutineScreen() {
             <View key={treatment.serverId ?? `new-${index}`} style={[styles.treatmentCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
               <View style={styles.treatmentCardHeader}>
                 <View style={styles.treatmentInfo}>
-                  <Text style={styles.treatmentEmoji}>{meta?.emoji ?? '💊'}</Text>
+                  <View style={styles.treatmentIconContainer}>
+                    {meta?.icon ? <meta.icon size={28} /> : <Text style={styles.treatmentEmoji}>{meta?.emoji ?? '💊'}</Text>}
+                  </View>
                   <Text style={[styles.treatmentCardName, { color: colors.text }]}>{treatment.name}</Text>
                 </View>
                 <TouchableOpacity
@@ -583,9 +603,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  treatmentIconContainer: {
+    width: 28,
+    height: 28,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginRight: 12,
+  },
   treatmentEmoji: {
     fontSize: 22,
-    marginRight: 12,
   },
   treatmentLabel: {
     fontSize: 16,

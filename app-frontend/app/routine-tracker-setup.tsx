@@ -18,24 +18,36 @@ import { CrownMascot } from '@/components/CrownMascot';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
+import { DutasterideIcon } from '@/components/icons/DutasterideIcon';
+import { FinasterideIcon } from '@/components/icons/FinasterideIcon';
+import { MinoxidilIcon } from '@/components/icons/MinoxidilIcon';
+import { MicroneedlingIcon } from '@/components/icons/MicroneedlingIcon';
+import { KetoconazoleIcon } from '@/components/icons/KetoconazoleIcon';
+import { PumpkinSeedOilIcon } from '@/components/icons/PumpkinSeedOilIcon';
+import { RosemaryOilIcon } from '@/components/icons/RosemaryOilIcon';
+import { ScalpMassagerIcon } from '@/components/icons/ScalpMassagerIcon';
 
 // ─── Constants ───────────────────────────────────────────────
 
-type TreatmentId = 'minoxidil' | 'finasteride' | 'microneedling' | 'ketoconazole' | 'hair_oils';
+type TreatmentId = 'minoxidil' | 'finasteride' | 'dutasteride' | 'microneedling' | 'ketoconazole' | 'pumpkin_seed_oil' | 'rosemary_oil' | 'scalp_massage';
 
 interface Treatment {
   id: TreatmentId;
   label: string;
   emoji: string;
+  icon?: React.ComponentType<{ size?: number }>;
   tip: string;
 }
 
 const TREATMENTS: Treatment[] = [
-  { id: 'minoxidil', label: 'Minoxidil', emoji: '🧴', tip: 'Studies recommend taking Minoxidil once or twice daily' },
-  { id: 'finasteride', label: 'Finasteride', emoji: '💊', tip: 'Studies recommend taking Finasteride once daily' },
-  { id: 'microneedling', label: 'Microneedling', emoji: '🪡', tip: 'Studies recommend microneedling once or twice a week' },
-  { id: 'ketoconazole', label: 'Ketoconazole', emoji: '🧴', tip: 'Studies recommend using Ketoconazole 2-3 times a week' },
-  { id: 'hair_oils', label: 'Hair Oils', emoji: '🫧', tip: 'Apply hair oils as part of your daily routine' },
+  { id: 'minoxidil', label: 'Minoxidil', emoji: '💧', icon: MinoxidilIcon, tip: 'Studies recommend taking Minoxidil once or twice daily' },
+  { id: 'finasteride', label: 'Finasteride', emoji: '💊', icon: FinasterideIcon, tip: 'Studies recommend taking Finasteride once daily' },
+  { id: 'dutasteride', label: 'Dutasteride', emoji: '💊', icon: DutasterideIcon, tip: 'Studies recommend taking Dutasteride once daily' },
+  { id: 'microneedling', label: 'Microneedling', emoji: '🪡', icon: MicroneedlingIcon, tip: 'Studies recommend microneedling once or twice a week' },
+  { id: 'ketoconazole', label: 'Ketoconazole', emoji: '🧴', icon: KetoconazoleIcon, tip: 'Studies recommend using Ketoconazole 2-3 times a week' },
+  { id: 'pumpkin_seed_oil', label: 'Pumpkin Seed Oil', emoji: '🎃', icon: PumpkinSeedOilIcon, tip: 'Studies suggest taking pumpkin seed oil daily as a supplement' },
+  { id: 'rosemary_oil', label: 'Rosemary Oil', emoji: '🌿', icon: RosemaryOilIcon, tip: 'Studies recommend applying rosemary oil to the scalp daily' },
+  { id: 'scalp_massage', label: 'Scalp Massage', emoji: '✋', icon: ScalpMassagerIcon, tip: 'Studies recommend scalp massage for 5-10 minutes daily' },
 ];
 
 const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -289,7 +301,9 @@ export default function RoutineTrackerSetupScreen() {
                   onPress={() => toggleTreatment(t.id)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.treatmentEmoji}>{t.emoji}</Text>
+                  <View style={styles.treatmentIconContainer}>
+                    {t.icon ? <t.icon size={28} /> : <Text style={styles.treatmentEmoji}>{t.emoji}</Text>}
+                  </View>
                   <Text style={[styles.treatmentLabel, { color: colors.text }]}>{t.label}</Text>
                 </TouchableOpacity>
               );
@@ -590,9 +604,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  treatmentIconContainer: {
+    width: 28,
+    height: 28,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginRight: 12,
+  },
   treatmentEmoji: {
     fontSize: 22,
-    marginRight: 12,
   },
   treatmentLabel: {
     fontSize: 16,

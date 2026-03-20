@@ -2,6 +2,7 @@ import React from 'react';
 import { FinasterideIcon } from '@/components/icons/FinasterideIcon';
 import { MinoxidilIcon } from '@/components/icons/MinoxidilIcon';
 import { MicroneedlingIcon } from '@/components/icons/MicroneedlingIcon';
+import { DutasterideIcon } from '@/components/icons/DutasterideIcon';
 import { KetoconazoleIcon } from '@/components/icons/KetoconazoleIcon';
 import { PumpkinSeedOilIcon } from '@/components/icons/PumpkinSeedOilIcon';
 import { RosemaryOilIcon } from '@/components/icons/RosemaryOilIcon';
@@ -47,6 +48,7 @@ export const TREATMENTS: Treatment[] = [
       'Finasteride is a 5-alpha reductase inhibitor that lowers scalp and serum DHT by ~60\u201370%. Since androgenic alopecia (male pattern baldness) is primarily driven by DHT binding to androgen receptors in genetically sensitive follicles, reducing DHT directly addresses the root cause.',
       'Clinical trials show ~85\u201390% of men stop hair loss progression, and ~60\u201365% see measurable regrowth over 1\u20132 years. It is the most effective standalone treatment for preventing further miniaturization.',
       'Potential side effects include decreased libido, erectile dysfunction, and mood changes in a small percentage of users (typically 2\u20134% in clinical trials). Most side effects resolve after discontinuation.',
+      'Always consult a qualified healthcare provider to assess suitability and obtain a prescription before starting this treatment.',
     ],
     bestSuitedFor: 'Men in early to mid-stage hair loss who want long-term stabilization.',
   },
@@ -68,6 +70,7 @@ export const TREATMENTS: Treatment[] = [
       'Minoxidil is a potassium channel opener and vasodilator that prolongs the anagen (growth) phase of hair follicles. It does not reduce DHT but improves follicle size and growth duration.',
       'Topical 5% minoxidil can increase hair density by ~10\u201320% over baseline in responders. Oral low-dose minoxidil is increasingly used off-label and may produce stronger results due to better systemic absorption.',
       'Shedding during the first 6\u20138 weeks is common and temporary. Consistency is critical \u2014 stopping leads to loss of gained hair.',
+      'Always consult a qualified healthcare provider to assess suitability and obtain a prescription before starting this treatment.',
     ],
     bestSuitedFor: 'Adding density, especially at the crown.',
   },
@@ -110,6 +113,27 @@ export const TREATMENTS: Treatment[] = [
       'Studies suggest it improves hair density modestly when used 2\u20133 times weekly. It is best used as part of a broader regimen ("Big 3" or "Big 4").',
     ],
     bestSuitedFor: 'Supporting treatment and improving scalp health.',
+  },
+  {
+    id: 'dutasteride',
+    name: 'Dutasteride',
+    emoji: '💊',
+    icon: DutasterideIcon,
+    color: '#F5EDDF',
+    subtitle: 'Oral - Dual 5-Alpha Reductase Inhibition',
+    ratings: [
+      { label: 'Effectiveness', value: '9.5/10', numericValue: 9.5, maxValue: 10 },
+      { label: 'Mechanism Strength', value: '10/10', numericValue: 10, maxValue: 10 },
+      { label: 'Side Effect Risk', value: '7/10', numericValue: 7, maxValue: 10 },
+      { label: 'Ease of Use', value: '9/10', numericValue: 9, maxValue: 10 },
+    ],
+    description: [
+      'Dutasteride inhibits both Type I and Type II 5-alpha reductase, reducing DHT by up to 90%. It is more potent than finasteride and often used when finasteride results plateau.',
+      'Clinical trials show superior hair count improvement compared to finasteride at 0.5 mg daily.',
+      'Side effects are similar to finasteride but potentially slightly more common due to stronger hormonal suppression.',
+      'Always consult a qualified healthcare provider to assess suitability and obtain a prescription before starting this treatment.',
+    ],
+    bestSuitedFor: 'Aggressive or advanced hair loss cases.',
   },
   {
     id: 'rosemary-oil',

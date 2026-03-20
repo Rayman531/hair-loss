@@ -8,6 +8,20 @@
       "when": 1773605595683,
       "tag": "0000_public_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773977614274,
+      "tag": "0001_jittery_thunderball",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773978006388,
+      "tag": "0002_chunky_marrow",
+      "breakpoints": true
     }
   ]
 }

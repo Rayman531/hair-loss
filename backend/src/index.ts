@@ -6,6 +6,7 @@ import dashboard from './routes/dashboard'
 import progress from './routes/progress'
 import tracker from './routes/tracker'
 import feedbackRoutes from './routes/feedback'
+import notifications from './routes/notifications'
 
 type Env = {
   DATABASE_URL: string;
@@ -65,5 +66,24 @@ app.route('/api/dashboard', dashboard)
 app.route('/api/progress', progress)
 app.route('/api/tracker', tracker)
 app.route('/api/feedback', feedbackRoutes)
+app.route('/api/notifications', notifications)
 
-export default app
+export default {
+  fetch: app.fetch,
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    const { createDrizzleConnection } = await import('./db/drizzle');
+    const { processScheduledReminders } = await import('./services/notifications');
+
+    ctx.waitUntil(
+      (async () => {
+        try {
+          const db = createDrizzleConnection(env.DATABASE_URL);
+          const count = await processScheduledReminders(db);
+          log.info('cron reminders completed', { sent: count });
+        } catch (error) {
+          log.error('cron reminder failed', { error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+      })()
+    );
+  },
+}
