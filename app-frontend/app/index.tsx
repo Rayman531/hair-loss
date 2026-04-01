@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
   }, [isLoaded, isSignedIn, isFocused]);
 
   const handleContinue = () => {
-    router.push('/onboarding');
+    router.push('/onboarding-age');
   };
 
   const handleSignIn = () => {

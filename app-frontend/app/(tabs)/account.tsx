@@ -38,6 +38,8 @@ export default function AccountScreen() {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Notification preferences
   const [notifEnabled, setNotifEnabled] = useState(true);
@@ -141,7 +143,25 @@ export default function AccountScreen() {
   };
 
   const handleCustomerSupport = () => {
-    Linking.openURL('mailto:support@follixapp.com');
+    Linking.openURL('mailto:support@follixapp.tech');
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.ACCOUNT, {
+        method: 'DELETE',
+        headers: { 'X-User-Id': user?.id ?? '' },
+      });
+      if (!res.ok) throw new Error('Failed to delete account');
+      await signOut();
+      router.replace('/sign-in');
+    } catch {
+      Alert.alert('Error', 'Failed to delete your account. Please try again or contact support.');
+    } finally {
+      setDeletingAccount(false);
+      setDeleteAccountVisible(false);
+    }
   };
 
   return (
@@ -311,6 +331,47 @@ export default function AccountScreen() {
       >
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
+
+      {/* Delete Account */}
+      <Pressable
+        style={styles.deleteAccountBtn}
+        onPress={() => setDeleteAccountVisible(true)}
+      >
+        <Text style={styles.deleteAccountText}>Delete Account</Text>
+      </Pressable>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        visible={deleteAccountVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setDeleteAccountVisible(false)}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={[styles.deleteModalCard, themed.card]}>
+            <Text style={[styles.deleteModalTitle, themed.title]}>Delete Account?</Text>
+            <Text style={styles.deleteModalBody}>
+              This will permanently delete your account and all associated data — including your progress photos, routine logs, and notification settings.{'\n\n'}This action cannot be undone.
+            </Text>
+            <Pressable
+              style={[styles.deleteConfirmBtn, deletingAccount && styles.submitBtnDisabled]}
+              onPress={handleDeleteAccount}
+              disabled={deletingAccount}
+            >
+              <Text style={styles.deleteConfirmBtnText}>
+                {deletingAccount ? 'Deleting...' : 'Yes, Delete My Account'}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={styles.deleteCancelBtn}
+              onPress={() => setDeleteAccountVisible(false)}
+              disabled={deletingAccount}
+            >
+              <Text style={[styles.deleteCancelBtnText, { color: colors.accent }]}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Feedback Modal */}
       <Modal
@@ -527,5 +588,58 @@ const styles = StyleSheet.create({
   },
   timeOptionText: {
     fontSize: 17,
+  },
+  deleteAccountBtn: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  deleteAccountText: {
+    fontSize: 15,
+    color: '#8E8E93',
+    fontWeight: '400',
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  deleteModalCard: {
+    width: '100%',
+    borderRadius: 18,
+    padding: 24,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  deleteModalBody: {
+    fontSize: 15,
+    color: '#8E8E93',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  deleteConfirmBtn: {
+    backgroundColor: '#D44332',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  deleteConfirmBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  deleteCancelBtn: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  deleteCancelBtnText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

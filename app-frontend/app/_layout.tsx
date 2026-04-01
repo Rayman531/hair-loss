@@ -35,6 +35,7 @@ function RootNavigator() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: true }} />
+        <Stack.Screen name="onboarding-age" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="onboarding-complete" />
         <Stack.Screen name="sign-up" />

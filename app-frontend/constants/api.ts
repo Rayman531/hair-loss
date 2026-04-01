@@ -55,4 +55,5 @@ export const API_ENDPOINTS = {
   FEEDBACK: `${API_BASE_URL}/api/feedback`,
   NOTIFICATIONS_PUSH_TOKEN: `${API_BASE_URL}/api/notifications/push-token`,
   NOTIFICATIONS_PREFERENCES: `${API_BASE_URL}/api/notifications/preferences`,
+  ACCOUNT: `${API_BASE_URL}/api/account`,
 };

@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -62,6 +63,7 @@ export default function CompareScreen() {
   const [leftIdx, setLeftIdx] = useState(0);
   const [rightIdx, setRightIdx] = useState(1);
   const [picking, setPicking] = useState<'left' | 'right' | null>(null);
+  const [expandedUri, setExpandedUri] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -179,8 +181,12 @@ export default function CompareScreen() {
         <View key={key} style={styles.angleRow}>
           <Text style={[styles.angleLabel, themed.angleLabel]}>{label}</Text>
           <View style={styles.photoRow}>
-            <Image source={{ uri: sessionLeft[key] }} style={[styles.compareImage, themed.imagePlaceholder]} />
-            <Image source={{ uri: sessionRight[key] }} style={[styles.compareImage, themed.imagePlaceholder]} />
+            <Pressable style={styles.compareImageWrapper} onPress={() => setExpandedUri(sessionLeft[key] ?? null)}>
+              <Image source={{ uri: sessionLeft[key] }} style={[styles.compareImage, themed.imagePlaceholder]} />
+            </Pressable>
+            <Pressable style={styles.compareImageWrapper} onPress={() => setExpandedUri(sessionRight[key] ?? null)}>
+              <Image source={{ uri: sessionRight[key] }} style={[styles.compareImage, themed.imagePlaceholder]} />
+            </Pressable>
           </View>
         </View>
       ))}
@@ -188,6 +194,12 @@ export default function CompareScreen() {
       <Pressable style={[styles.backBtn, themed.backBtn]} onPress={() => router.back()}>
         <Text style={[styles.backBtnText, themed.backBtnText]}>Back to Gallery</Text>
       </Pressable>
+
+      <Modal visible={!!expandedUri} transparent animationType="fade" onRequestClose={() => setExpandedUri(null)}>
+        <Pressable style={styles.lightboxOverlay} onPress={() => setExpandedUri(null)}>
+          <Image source={{ uri: expandedUri! }} style={styles.lightboxImage} resizeMode="contain" />
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -249,10 +261,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  compareImageWrapper: {
+    flex: 1,
+  },
   compareImage: {
     flex: 1,
     aspectRatio: 0.91,
     borderRadius: 14,
+  },
+
+  // Lightbox
+  lightboxOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lightboxImage: {
+    width: '100%',
+    height: '100%',
   },
 
   // Session picker

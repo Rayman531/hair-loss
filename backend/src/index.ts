@@ -7,6 +7,7 @@ import progress from './routes/progress'
 import tracker from './routes/tracker'
 import feedbackRoutes from './routes/feedback'
 import notifications from './routes/notifications'
+import account from './routes/account'
 
 type Env = {
   DATABASE_URL: string;
@@ -67,6 +68,7 @@ app.route('/api/progress', progress)
 app.route('/api/tracker', tracker)
 app.route('/api/feedback', feedbackRoutes)
 app.route('/api/notifications', notifications)
+app.route('/api/account', account)
 
 export default {
   fetch: app.fetch,

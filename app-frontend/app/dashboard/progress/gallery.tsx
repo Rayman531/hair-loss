@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -47,6 +48,7 @@ export default function GalleryScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedUri, setExpandedUri] = useState<string | null>(null);
 
   const themed = useMemo(() => ({
     container: { backgroundColor: colors.background },
@@ -191,19 +193,25 @@ export default function GalleryScreen() {
 
               <View style={styles.thumbGrid}>
                 {ANGLE_KEYS.map(({ key, label }) => (
-                  <View key={key} style={styles.thumbCell}>
+                  <Pressable key={key} style={styles.thumbCell} onPress={() => setExpandedUri(session[key])}>
                     <Image
                       source={{ uri: session[key] }}
                       style={[styles.thumbImage, themed.thumbImage]}
                     />
                     <Text style={styles.thumbLabel}>{label}</Text>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             </View>
           ))
         )}
       </ScrollView>
+
+      <Modal visible={!!expandedUri} transparent animationType="fade" onRequestClose={() => setExpandedUri(null)}>
+        <Pressable style={styles.lightboxOverlay} onPress={() => setExpandedUri(null)}>
+          <Image source={{ uri: expandedUri! }} style={styles.lightboxImage} resizeMode="contain" />
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -337,5 +345,17 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     marginTop: 60,
+  },
+
+  // Lightbox
+  lightboxOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lightboxImage: {
+    width: '100%',
+    height: '100%',
   },
 });
