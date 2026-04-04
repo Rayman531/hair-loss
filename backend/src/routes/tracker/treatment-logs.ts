@@ -3,8 +3,9 @@ import { createDrizzleConnection } from '../../db/drizzle';
 import { routines, treatments, treatmentLogs } from '../../db/schema';
 import { eq, and, gte, lte, isNull } from 'drizzle-orm';
 import { log } from '../../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../../lib/posthog';
 
-type Env = { DATABASE_URL: string };
+type Env = { DATABASE_URL: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const treatmentLogsRoute = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -148,7 +149,7 @@ treatmentLogsRoute.post('/', async (c) => {
     }
 
     // Upsert: insert or update on conflict
-    const [log] = await db
+    const [logEntry] = await db
       .insert(treatmentLogs)
       .values({
         treatmentId: body.treatmentId,
@@ -161,7 +162,15 @@ treatmentLogsRoute.post('/', async (c) => {
       })
       .returning();
 
-    return c.json({ success: true, data: log }, 201);
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({
+      distinctId: userId,
+      event: 'treatment_logged',
+      properties: { treatment_id: body.treatmentId, date: body.date, completed: body.completed },
+    })
+    await posthog.shutdown()
+
+    return c.json({ success: true, data: logEntry }, 201);
   } catch (error) {
     log.error('treatment log create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({

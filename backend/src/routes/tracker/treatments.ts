@@ -3,8 +3,9 @@ import { createDrizzleConnection } from '../../db/drizzle';
 import { routines, treatments } from '../../db/schema';
 import { eq, and, asc, isNull } from 'drizzle-orm';
 import { log } from '../../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../../lib/posthog';
 
-type Env = { DATABASE_URL: string };
+type Env = { DATABASE_URL: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -121,6 +122,14 @@ treatmentsRoute.post('/', async (c) => {
       })
       .returning();
 
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({
+      distinctId: userId,
+      event: 'treatment_added',
+      properties: { treatment_id: treatment.id, treatment_name: treatment.name, frequency_per_week: treatment.frequencyPerWeek, days_of_week: treatment.daysOfWeek },
+    })
+    await posthog.shutdown()
+
     return c.json({ success: true, data: treatment }, 201);
   } catch (error) {
     log.error('treatment create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
@@ -191,6 +200,14 @@ treatmentsRoute.patch('/:id', async (c) => {
       return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Treatment not found' } }, 404);
     }
 
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({
+      distinctId: userId,
+      event: 'treatment_updated',
+      properties: { treatment_id: updated.id, treatment_name: updated.name, frequency_per_week: updated.frequencyPerWeek, days_of_week: updated.daysOfWeek },
+    })
+    await posthog.shutdown()
+
     return c.json({ success: true, data: updated });
   } catch (error) {
     log.error('treatment update failed', { error: error instanceof Error ? error.message : 'Unknown error' });
@@ -222,6 +239,10 @@ treatmentsRoute.delete('/:id', async (c) => {
     if (!deleted) {
       return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Treatment not found' } }, 404);
     }
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({ distinctId: userId, event: 'treatment_deleted', properties: { treatment_id: deleted.id } })
+    await posthog.shutdown()
 
     return c.json({ success: true, data: { id: deleted.id } });
   } catch (error) {

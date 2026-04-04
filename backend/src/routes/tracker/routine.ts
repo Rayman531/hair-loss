@@ -3,8 +3,9 @@ import { createDrizzleConnection } from '../../db/drizzle';
 import { routines } from '../../db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { log } from '../../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../../lib/posthog';
 
-type Env = { DATABASE_URL: string };
+type Env = { DATABASE_URL: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const routineTracker = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -69,6 +70,10 @@ routineTracker.post('/', async (c) => {
       .insert(routines)
       .values({ userId })
       .returning();
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({ distinctId: userId, event: 'routine_created', properties: { routine_id: routine.id } })
+    await posthog.shutdown()
 
     return c.json({ success: true, data: routine }, 201);
   } catch (error) {

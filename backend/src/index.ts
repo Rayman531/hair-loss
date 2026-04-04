@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { log } from './lib/logger'
+import { createPostHogClient } from './lib/posthog'
 import onboarding from './routes/onboarding'
 import dashboard from './routes/dashboard'
 import progress from './routes/progress'
@@ -16,6 +17,8 @@ type Env = {
   R2_ACCOUNT_ID: string;
   R2_BUCKET_NAME: string;
   R2_PUBLIC_URL: string;
+  POSTHOG_API_KEY: string;
+  POSTHOG_HOST: string;
 };
 
 const app = new Hono<{ Bindings: Env }>()
@@ -39,7 +42,7 @@ app.use('/*', async (c, next) => {
 })
 
 // Global error handler
-app.onError((err, c) => {
+app.onError(async (err, c) => {
   const method = c.req.method;
   const path = c.req.path;
   const userId = c.req.header('X-User-Id') ?? 'anon';
@@ -51,6 +54,10 @@ app.onError((err, c) => {
     error: err.message,
     stack: err.stack,
   });
+
+  const posthog = createPostHogClient(c.env)
+  posthog.captureException(err, userId !== 'anon' ? userId : undefined, { method, path })
+  await posthog.shutdown()
 
   return c.json({
     success: false,

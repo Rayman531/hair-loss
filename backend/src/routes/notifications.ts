@@ -4,8 +4,9 @@ import { pushTokens, notificationPreferences } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { log } from '../lib/logger';
 import { processScheduledReminders } from '../services/notifications';
+import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
 
-type Env = { DATABASE_URL: string };
+type Env = { DATABASE_URL: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const notifications = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -53,6 +54,11 @@ notifications.post('/push-token', async (c) => {
     await db.insert(pushTokens).values({ userId, token });
 
     log.info('push token registered', { userId });
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({ distinctId: userId, event: 'push_token_registered' })
+    await posthog.shutdown()
+
     return c.json({ success: true, data: { registered: true } }, 201);
   } catch (error) {
     log.error('push token registration failed', { error: error instanceof Error ? error.message : 'Unknown error' });
@@ -151,6 +157,14 @@ notifications.put('/preferences', async (c) => {
         .where(eq(notificationPreferences.id, existing.id))
         .returning();
 
+      const posthog = createPostHogClient(c.env)
+      posthog.capture({
+        distinctId: userId,
+        event: 'notification_preferences_updated',
+        properties: { enabled: updated.enabled, reminder_hour: updated.reminderHour, reminder_minute: updated.reminderMinute, timezone: updated.timezone },
+      })
+      await posthog.shutdown()
+
       return c.json({ success: true, data: updated });
     }
 
@@ -164,6 +178,14 @@ notifications.put('/preferences', async (c) => {
         timezone: body.timezone ?? 'UTC',
       })
       .returning();
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({
+      distinctId: userId,
+      event: 'notification_preferences_updated',
+      properties: { enabled: created.enabled, reminder_hour: created.reminderHour, reminder_minute: created.reminderMinute, timezone: created.timezone },
+    })
+    await posthog.shutdown()
 
     return c.json({ success: true, data: created }, 201);
   } catch (error) {

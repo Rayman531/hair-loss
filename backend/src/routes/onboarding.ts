@@ -3,6 +3,7 @@ import { createDrizzleConnection } from '../db/drizzle';
 import { onboardingQuestions, onboardingOptions, onboardingResponses } from '../db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { log } from '../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
 import type {
   Question,
   QuestionOption,
@@ -14,7 +15,7 @@ import type {
 
 type Env = {
   DATABASE_URL: string;
-};
+} & PostHogEnv;
 
 const onboarding = new Hono<{ Bindings: Env }>();
 
@@ -148,6 +149,16 @@ onboarding.post('/responses', async (c) => {
         totalQuestions: body.responses.length,
       },
     };
+
+    const posthog = createPostHogClient(c.env)
+    const distinctId = c.req.header('X-User-Id') ?? body.sessionId
+    posthog.identify({ distinctId, properties: { $set_once: { onboarding_completed_at: completedAt } } })
+    posthog.capture({
+      distinctId,
+      event: 'onboarding_completed',
+      properties: { total_questions: body.responses.length, session_id: body.sessionId },
+    })
+    await posthog.shutdown()
 
     return c.json(successResponse, 201);
   } catch (error) {

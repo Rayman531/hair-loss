@@ -11,10 +11,11 @@ import {
 import { eq, isNull } from 'drizzle-orm';
 import { deleteFromR2, extractR2Key, validateR2Env, type R2Env } from '../lib/r2';
 import { log } from '../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
 
 type Env = {
   DATABASE_URL: string;
-} & R2Env;
+} & R2Env & PostHogEnv;
 
 const account = new Hono<{ Bindings: Env }>();
 
@@ -78,6 +79,14 @@ account.delete('/', async (c) => {
     ]);
 
     log.info('account deleted', { userId });
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({
+      distinctId: userId,
+      event: 'account_deleted',
+      properties: { progress_sessions_deleted: sessions.length },
+    })
+    await posthog.shutdown()
 
     return c.json({ success: true });
   } catch (error) {

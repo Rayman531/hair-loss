@@ -4,10 +4,11 @@ import { progressSessions } from '../db/schema';
 import { eq, desc, and, isNull } from 'drizzle-orm';
 import { uploadToR2, deleteFromR2, extractR2Key, generatePhotoKey, validateR2Env, type R2Env } from '../lib/r2';
 import { log } from '../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
 
 type Env = {
   DATABASE_URL: string;
-} & R2Env;
+} & R2Env & PostHogEnv;
 
 type Variables = {
   userId: string;
@@ -106,6 +107,14 @@ progress.post('/upload', async (c) => {
       .returning();
 
     log.info('progress session created', { sessionId: session.id, userId });
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({
+      distinctId: userId,
+      event: 'progress_photo_uploaded',
+      properties: { session_id: session.id, has_note: note !== null },
+    })
+    await posthog.shutdown()
 
     return c.json({ success: true, data: session }, 201);
   } catch (error) {
@@ -210,6 +219,10 @@ progress.delete('/:id', async (c) => {
       );
 
     log.info('progress session deleted', { sessionId, userId });
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({ distinctId: userId, event: 'progress_photo_deleted', properties: { session_id: sessionId } })
+    await posthog.shutdown()
 
     return c.json({ success: true, data: { id: sessionId } });
   } catch (error) {

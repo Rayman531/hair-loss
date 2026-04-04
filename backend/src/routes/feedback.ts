@@ -3,10 +3,11 @@ import { createDrizzleConnection } from '../db/drizzle';
 import { feedback } from '../db/schema';
 import { desc } from 'drizzle-orm';
 import { log } from '../lib/logger';
+import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
 
 type Env = {
   DATABASE_URL: string;
-};
+} & PostHogEnv;
 
 type Variables = {
   userId: string;
@@ -38,6 +39,10 @@ feedbackRoutes.post('/', async (c) => {
       .insert(feedback)
       .values({ userId, message: message.trim() })
       .returning();
+
+    const posthog = createPostHogClient(c.env)
+    posthog.capture({ distinctId: userId, event: 'feedback_submitted', properties: { feedback_id: entry.id } })
+    await posthog.shutdown()
 
     return c.json({ success: true, data: entry });
   } catch (error) {
