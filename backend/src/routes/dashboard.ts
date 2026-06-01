@@ -3,9 +3,11 @@ import { createDrizzleConnection } from '../db/drizzle';
 import { routines, treatments, progressSessions } from '../db/schema';
 import { eq, and, asc, isNull } from 'drizzle-orm';
 import { log } from '../lib/logger';
+import { extractUserId } from '../lib/auth';
 
 type Env = {
   DATABASE_URL: string;
+  CLERK_SECRET_KEY: string;
 };
 
 type Variables = {
@@ -42,11 +44,10 @@ function getMotivationalMessage(): string {
 
 const dashboard = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard: extract userId from X-User-Id header
 dashboard.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: 'Unauthorized' }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -94,7 +95,6 @@ dashboard.get('/', async (c) => {
       error: {
         code: 'FETCH_DASHBOARD_ERROR',
         message: 'Failed to fetch dashboard data',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 500);
   }

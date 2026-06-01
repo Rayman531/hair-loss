@@ -12,25 +12,29 @@ import { eq, isNull } from 'drizzle-orm';
 import { deleteFromR2, extractR2Key, validateR2Env, type R2Env } from '../lib/r2';
 import { log } from '../lib/logger';
 import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
+import { extractUserId } from '../lib/auth';
 
 type Env = {
   DATABASE_URL: string;
+  CLERK_SECRET_KEY: string;
 } & R2Env & PostHogEnv;
 
-const account = new Hono<{ Bindings: Env }>();
+type Variables = { userId: string };
 
-// Auth guard
+const account = new Hono<{ Bindings: Env; Variables: Variables }>();
+
 account.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
+  c.set('userId', userId);
   await next();
 });
 
 // DELETE /api/account — permanently delete all user data
 account.delete('/', async (c) => {
-  const userId = c.req.header('X-User-Id')!;
+  const userId = c.get('userId');
 
   try {
     const db = createDrizzleConnection(c.env.DATABASE_URL);

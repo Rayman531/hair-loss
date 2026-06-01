@@ -52,7 +52,7 @@ function getCurrentMonth(): string {
 }
 
 export default function RoutineTrackerScreen() {
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -79,11 +79,12 @@ export default function RoutineTrackerScreen() {
   }), [dark, colors]);
 
   const fetchHeatmap = useCallback(async (month: string) => {
-    if (!userId) return;
     setHeatmapLoading(true);
     try {
+      const token = await getToken();
+      if (!token) return;
       const res = await fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${month}`, {
-        headers: { 'X-User-Id': userId },
+        headers: { 'Authorization': `Bearer ${token}` },
       }).then((r) => r.json());
       if (res?.success && res.data) {
         setHeatmap(res.data);
@@ -93,7 +94,7 @@ export default function RoutineTrackerScreen() {
     } finally {
       setHeatmapLoading(false);
     }
-  }, [userId]);
+  }, [getToken]);
 
   const shiftMonth = useCallback((month: string, delta: number): string => {
     const [y, m] = month.split('-').map(Number);
@@ -117,14 +118,15 @@ export default function RoutineTrackerScreen() {
   }, [displayMonth, currentMonth, shiftMonth, fetchHeatmap]);
 
   const fetchData = useCallback(async () => {
-    if (!userId) return;
-
     setLoading(true);
     setError(null);
 
-    const headers = { 'X-User-Id': userId };
-
     try {
+      const token = await getToken();
+      if (!token) return;
+
+      const headers = { 'Authorization': `Bearer ${token}` };
+
       const [summaryRes, heatmapRes] = await Promise.all([
         fetch(API_ENDPOINTS.TRACKER_SUMMARY, { headers }).then((r) => r.json()),
         fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${displayMonth}`, { headers })
@@ -146,7 +148,7 @@ export default function RoutineTrackerScreen() {
     } finally {
       setLoading(false);
     }
-  }, [userId, displayMonth]);
+  }, [getToken, displayMonth]);
 
   useFocusEffect(
     useCallback(() => {

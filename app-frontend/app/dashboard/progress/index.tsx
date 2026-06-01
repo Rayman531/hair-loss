@@ -1,31 +1,32 @@
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth } from '@clerk/clerk-expo';
 import React, { useEffect, useState } from 'react';
 
 import { fetchProgressSessions } from '@/lib/api/progress';
 import { ThemedText } from '@/components/themed-text';
 
 export default function ProgressIndex() {
-  const { user } = useUser();
+  const { getToken } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
-
-    fetchProgressSessions(user.id)
-      .then((res) => {
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetchProgressSessions(token);
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
           router.replace('/dashboard/progress/gallery');
         } else {
           router.replace('/dashboard/progress/setup');
         }
-      })
-      .catch((err) => {
+      } catch (err: any) {
         setError(err.message);
-      });
-  }, [user?.id]);
+      }
+    })();
+  }, []);
 
   if (error) {
     return (

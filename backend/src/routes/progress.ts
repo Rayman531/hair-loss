@@ -5,9 +5,11 @@ import { eq, desc, and, isNull } from 'drizzle-orm';
 import { uploadToR2, deleteFromR2, extractR2Key, generatePhotoKey, validateR2Env, type R2Env } from '../lib/r2';
 import { log } from '../lib/logger';
 import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
+import { extractUserId } from '../lib/auth';
 
 type Env = {
   DATABASE_URL: string;
+  CLERK_SECRET_KEY: string;
 } & R2Env & PostHogEnv;
 
 type Variables = {
@@ -19,11 +21,10 @@ type Angle = (typeof REQUIRED_ANGLES)[number];
 
 const progress = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard: extract userId from X-User-Id header
 progress.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -124,7 +125,6 @@ progress.post('/upload', async (c) => {
       error: {
         code: 'UPLOAD_ERROR',
         message: 'Failed to upload progress photos',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 500);
   }
@@ -150,7 +150,6 @@ progress.get('/', async (c) => {
       error: {
         code: 'FETCH_SESSIONS_ERROR',
         message: 'Failed to fetch progress sessions',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 500);
   }
@@ -232,7 +231,6 @@ progress.delete('/:id', async (c) => {
       error: {
         code: 'DELETE_ERROR',
         message: 'Failed to delete progress session',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 500);
   }

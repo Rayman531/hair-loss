@@ -59,7 +59,7 @@ type Step = 'loading' | 'select' | 'configure' | 'add-more' | 'complete';
 
 export default function RoutineTrackerSetupScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const { colorScheme } = useThemeContext();
   const colors = Colors[colorScheme];
 
@@ -90,11 +90,14 @@ export default function RoutineTrackerSetupScreen() {
 
   const checkExistingRoutine = async () => {
     try {
+      const token = await getToken();
+      if (!token) { setStep('select'); return; }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(API_ENDPOINTS.TRACKER_ROUTINE, {
-        headers: { 'X-User-Id': userId ?? '' },
+        headers: { 'Authorization': `Bearer ${token}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -192,9 +195,12 @@ export default function RoutineTrackerSetupScreen() {
     setError(null);
 
     try {
+      const token = await getToken();
+      if (!token) { setError('Not authenticated'); setSaving(false); return; }
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'X-User-Id': userId ?? '',
+        'Authorization': `Bearer ${token}`,
       };
 
       const controller = new AbortController();

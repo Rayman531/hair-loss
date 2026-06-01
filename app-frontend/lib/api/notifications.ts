@@ -7,11 +7,11 @@ export type NotificationPreferences = {
   timezone: string;
 };
 
-export async function registerPushToken(userId: string, token: string): Promise<{ success: boolean }> {
+export async function registerPushToken(token: string, token: string): Promise<{ success: boolean }> {
   const response = await fetch(API_ENDPOINTS.NOTIFICATIONS_PUSH_TOKEN, {
     method: 'POST',
     headers: {
-      'X-User-Id': userId,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ token }),
@@ -20,11 +20,11 @@ export async function registerPushToken(userId: string, token: string): Promise<
   return response.json();
 }
 
-export async function unregisterPushToken(userId: string, token: string): Promise<{ success: boolean }> {
+export async function unregisterPushToken(token: string, token: string): Promise<{ success: boolean }> {
   const response = await fetch(API_ENDPOINTS.NOTIFICATIONS_PUSH_TOKEN, {
     method: 'DELETE',
     headers: {
-      'X-User-Id': userId,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ token }),
@@ -33,9 +33,9 @@ export async function unregisterPushToken(userId: string, token: string): Promis
   return response.json();
 }
 
-export async function fetchNotificationPreferences(userId: string): Promise<NotificationPreferences> {
+export async function fetchNotificationPreferences(token: string): Promise<NotificationPreferences> {
   const response = await fetch(API_ENDPOINTS.NOTIFICATIONS_PREFERENCES, {
-    headers: { 'X-User-Id': userId },
+    headers: { 'Authorization': `Bearer ${token}` },
   });
 
   const json = await response.json();
@@ -43,13 +43,13 @@ export async function fetchNotificationPreferences(userId: string): Promise<Noti
 }
 
 export async function updateNotificationPreferences(
-  userId: string,
+  token: string,
   prefs: Partial<NotificationPreferences>,
 ): Promise<{ success: boolean }> {
   const response = await fetch(API_ENDPOINTS.NOTIFICATIONS_PREFERENCES, {
     method: 'PUT',
     headers: {
-      'X-User-Id': userId,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(prefs),

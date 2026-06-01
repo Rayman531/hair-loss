@@ -6,7 +6,7 @@ export const ALL_ANGLES: Angle[] = ["front", "top", "right", "left"];
 
 export type ProgressSession = {
   id: string;
-  userId: string;
+  token: string;
   note: string | null;
   frontImageUrl: string;
   topImageUrl: string;
@@ -21,7 +21,7 @@ export type CapturedPhoto = {
 };
 
 export async function uploadProgressSession(
-  userId: string,
+  token: string,
   photos: Record<Angle, CapturedPhoto>,
 ): Promise<{ success: boolean; data?: ProgressSession; error?: { message: string } }> {
   const formData = new FormData();
@@ -44,11 +44,11 @@ export async function uploadProgressSession(
     formData.append('note', notes.join('; '));
   }
 
-  console.log(`[Progress] Uploading session for user ${userId}`);
+  console.log(`[Progress] Uploading session`);
 
   const response = await fetch(API_ENDPOINTS.PROGRESS_UPLOAD, {
     method: 'POST',
-    headers: { 'X-User-Id': userId },
+    headers: { 'Authorization': `Bearer ${token}` },
     body: formData,
   });
 
@@ -64,13 +64,13 @@ export async function uploadProgressSession(
   return response.json();
 }
 
-export async function fetchProgressSessions(userId: string): Promise<{
+export async function fetchProgressSessions(token: string): Promise<{
   success: boolean;
   data?: ProgressSession[];
   error?: { message: string };
 }> {
   const response = await fetch(API_ENDPOINTS.PROGRESS, {
-    headers: { "X-User-Id": userId },
+    headers: { "Authorization": `Bearer ${token}` },
   });
 
   if (!response.ok) {
@@ -81,12 +81,12 @@ export async function fetchProgressSessions(userId: string): Promise<{
 }
 
 export async function deleteProgressSession(
-  userId: string,
+  token: string,
   sessionId: string,
 ): Promise<{ success: boolean; error?: { message: string } }> {
   const response = await fetch(`${API_ENDPOINTS.PROGRESS}/${sessionId}`, {
     method: 'DELETE',
-    headers: { 'X-User-Id': userId },
+    headers: { 'Authorization': `Bearer ${token}` },
   });
 
   if (!response.ok) {

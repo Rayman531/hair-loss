@@ -69,7 +69,7 @@ interface EditableTreatment {
 
 export default function EditRoutineScreen() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { getToken } = useAuth();
   const { colorScheme } = useThemeContext();
   const colors = Colors[colorScheme];
 
@@ -92,8 +92,10 @@ export default function EditRoutineScreen() {
 
   const loadTreatments = async () => {
     try {
+      const token = await getToken();
+      if (!token) { setLoading(false); return; }
       const res = await fetch(API_ENDPOINTS.TRACKER_TREATMENTS, {
-        headers: { 'X-User-Id': userId ?? '' },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
 
@@ -204,9 +206,12 @@ export default function EditRoutineScreen() {
     setSaving(true);
     setError(null);
 
+    const token = await getToken();
+    if (!token) { setError('Not authenticated'); setSaving(false); return; }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-User-Id': userId ?? '',
+      'Authorization': `Bearer ${token}`,
     };
 
     try {

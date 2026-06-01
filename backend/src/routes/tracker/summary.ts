@@ -2,17 +2,17 @@ import { Hono } from 'hono';
 import { createDrizzleConnection } from '../../db/drizzle';
 import { computeRoutineSummary } from '../../services/tracker';
 import { log } from '../../lib/logger';
+import { extractUserId } from '../../lib/auth';
 
-type Env = { DATABASE_URL: string };
+type Env = { DATABASE_URL: string; CLERK_SECRET_KEY: string };
 type Variables = { userId: string };
 
 const summaryRoute = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard
 summaryRoute.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -38,7 +38,7 @@ summaryRoute.get('/', async (c) => {
     log.error('routine summary compute failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'SUMMARY_ERROR', message: 'Failed to compute routine summary', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'SUMMARY_ERROR', message: 'Failed to compute routine summary' },
     }, 500);
   }
 });

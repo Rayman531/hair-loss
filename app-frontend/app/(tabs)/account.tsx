@@ -27,7 +27,7 @@ import {
 
 export default function AccountScreen() {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const router = useRouter();
 
   const { isDarkMode, colorScheme, toggleDarkMode } = useThemeContext();
@@ -47,15 +47,16 @@ export default function AccountScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const loadNotifPrefs = useCallback(async () => {
-    if (!user?.id) return;
     try {
-      const prefs = await fetchNotificationPreferences(user.id);
+      const token = await getToken();
+      if (!token) return;
+      const prefs = await fetchNotificationPreferences(token);
       setNotifEnabled(prefs.enabled);
       setReminderHour(prefs.reminderHour);
     } catch {
       // Use defaults
     }
-  }, [user?.id]);
+  }, [getToken]);
 
   useEffect(() => {
     loadNotifPrefs();
@@ -63,9 +64,10 @@ export default function AccountScreen() {
 
   const handleToggleNotifications = async (value: boolean) => {
     setNotifEnabled(value);
-    if (!user?.id) return;
     try {
-      await updateNotificationPreferences(user.id, {
+      const token = await getToken();
+      if (!token) return;
+      await updateNotificationPreferences(token, {
         enabled: value,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
@@ -77,9 +79,10 @@ export default function AccountScreen() {
   const handleSelectTime = async (hour: number) => {
     setReminderHour(hour);
     setShowTimePicker(false);
-    if (!user?.id) return;
     try {
-      await updateNotificationPreferences(user.id, {
+      const token = await getToken();
+      if (!token) return;
+      await updateNotificationPreferences(token, {
         reminderHour: hour,
         reminderMinute: 0,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -123,11 +126,13 @@ export default function AccountScreen() {
     if (!feedbackText.trim()) return;
     setSubmitting(true);
     try {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
       const res = await fetch(API_ENDPOINTS.FEEDBACK, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': user?.id ?? '',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ message: feedbackText.trim() }),
       });
@@ -149,9 +154,11 @@ export default function AccountScreen() {
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
     try {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
       const res = await fetch(API_ENDPOINTS.ACCOUNT, {
         method: 'DELETE',
-        headers: { 'X-User-Id': user?.id ?? '' },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to delete account');
       await signOut();
@@ -244,7 +251,7 @@ export default function AccountScreen() {
 
           <Pressable style={styles.row} onPress={handleCustomerSupport}>
             <Text style={styles.rowIcon}>✉️</Text>
-            <Text style={[styles.rowLabel, themed.rowLabel]}>Customer Support</Text>
+            <Text style={[styles.rowLabel, themed.rowLabel]}>Support</Text>
             <Text style={styles.rowChevron}>›</Text>
           </Pressable>
         </View>

@@ -5,17 +5,17 @@ import { eq, and } from 'drizzle-orm';
 import { log } from '../lib/logger';
 import { processScheduledReminders } from '../services/notifications';
 import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
+import { extractUserId } from '../lib/auth';
 
-type Env = { DATABASE_URL: string } & PostHogEnv;
+type Env = { DATABASE_URL: string; CLERK_SECRET_KEY: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const notifications = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard
 notifications.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -64,7 +64,7 @@ notifications.post('/push-token', async (c) => {
     log.error('push token registration failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'REGISTER_TOKEN_ERROR', message: 'Failed to register push token', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'REGISTER_TOKEN_ERROR', message: 'Failed to register push token' },
     }, 500);
   }
 });
@@ -93,7 +93,7 @@ notifications.delete('/push-token', async (c) => {
     log.error('push token unregistration failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'UNREGISTER_TOKEN_ERROR', message: 'Failed to unregister push token', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'UNREGISTER_TOKEN_ERROR', message: 'Failed to unregister push token' },
     }, 500);
   }
 });
@@ -208,7 +208,7 @@ notifications.post('/send-reminders', async (c) => {
     log.error('send reminders failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'SEND_REMINDERS_ERROR', message: 'Failed to send reminders', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'SEND_REMINDERS_ERROR', message: 'Failed to send reminders' },
     }, 500);
   }
 });

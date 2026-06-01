@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth } from '@clerk/clerk-expo';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 
 import { fetchProgressSessions, deleteProgressSession, ProgressSession, Angle } from '@/lib/api/progress';
@@ -36,7 +36,7 @@ function formatDate(iso: string) {
 }
 
 export default function GalleryScreen() {
-  const { user } = useUser();
+  const { getToken } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -66,26 +66,32 @@ export default function GalleryScreen() {
   }), [dark, colors]);
 
   const load = useCallback(() => {
-    if (!user?.id) return;
     setLoading(true);
-    fetchProgressSessions(user.id)
-      .then((res) => {
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetchProgressSessions(token);
         if (res.success && Array.isArray(res.data)) {
           setSessions(res.data);
         } else {
           setError('Failed to load sessions');
         }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [user?.id]);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [getToken]);
 
   const performDelete = useCallback(
     async (session: ProgressSession) => {
-      if (!user?.id) return;
       setDeletingId(session.id);
       try {
-        await deleteProgressSession(user.id, session.id);
+        const token = await getToken();
+        if (!token) return;
+        await deleteProgressSession(token, session.id);
         setSessions((prev) => prev.filter((s) => s.id !== session.id));
       } catch (err: any) {
         const msg = err.message ?? 'Failed to delete session';

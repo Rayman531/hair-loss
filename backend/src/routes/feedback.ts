@@ -1,12 +1,14 @@
 import { Hono } from 'hono';
 import { createDrizzleConnection } from '../db/drizzle';
 import { feedback } from '../db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { log } from '../lib/logger';
 import { createPostHogClient, type PostHogEnv } from '../lib/posthog';
+import { extractUserId } from '../lib/auth';
 
 type Env = {
   DATABASE_URL: string;
+  CLERK_SECRET_KEY: string;
 } & PostHogEnv;
 
 type Variables = {
@@ -15,11 +17,10 @@ type Variables = {
 
 const feedbackRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Middleware to extract userId
 feedbackRoutes.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ error: 'User ID is required' }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -51,12 +52,14 @@ feedbackRoutes.post('/', async (c) => {
   }
 });
 
-// Get all feedback (for admin use)
+// Get current user's own feedback
 feedbackRoutes.get('/', async (c) => {
   try {
+    const userId = c.get('userId');
     const entries = await createDrizzleConnection(c.env.DATABASE_URL)
       .select()
       .from(feedback)
+      .where(eq(feedback.userId, userId))
       .orderBy(desc(feedback.createdAt));
 
     return c.json({ success: true, data: entries });

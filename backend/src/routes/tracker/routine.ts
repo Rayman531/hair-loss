@@ -4,17 +4,17 @@ import { routines } from '../../db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { log } from '../../lib/logger';
 import { createPostHogClient, type PostHogEnv } from '../../lib/posthog';
+import { extractUserId } from '../../lib/auth';
 
-type Env = { DATABASE_URL: string } & PostHogEnv;
+type Env = { DATABASE_URL: string; CLERK_SECRET_KEY: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const routineTracker = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard
 routineTracker.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -41,7 +41,7 @@ routineTracker.get('/', async (c) => {
     log.error('routine fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'FETCH_ROUTINE_ERROR', message: 'Failed to fetch routine', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'FETCH_ROUTINE_ERROR', message: 'Failed to fetch routine' },
     }, 500);
   }
 });
@@ -80,7 +80,7 @@ routineTracker.post('/', async (c) => {
     log.error('routine create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'CREATE_ROUTINE_ERROR', message: 'Failed to create routine', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'CREATE_ROUTINE_ERROR', message: 'Failed to create routine' },
     }, 500);
   }
 });

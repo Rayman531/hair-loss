@@ -4,8 +4,9 @@ import { routines, treatments } from '../../db/schema';
 import { eq, and, asc, isNull } from 'drizzle-orm';
 import { log } from '../../lib/logger';
 import { createPostHogClient, type PostHogEnv } from '../../lib/posthog';
+import { extractUserId } from '../../lib/auth';
 
-type Env = { DATABASE_URL: string } & PostHogEnv;
+type Env = { DATABASE_URL: string; CLERK_SECRET_KEY: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -13,11 +14,10 @@ type DayOfWeek = typeof VALID_DAYS[number];
 
 const treatmentsRoute = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard
 treatmentsRoute.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -70,7 +70,7 @@ treatmentsRoute.get('/', async (c) => {
     log.error('treatments fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'FETCH_TREATMENTS_ERROR', message: 'Failed to fetch treatments', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'FETCH_TREATMENTS_ERROR', message: 'Failed to fetch treatments' },
     }, 500);
   }
 });
@@ -111,12 +111,24 @@ treatmentsRoute.post('/', async (c) => {
     }
 
     const daysOfWeek = [...new Set(body.daysOfWeek)] as string[];
+    const trimmedName = body.name.trim();
+
+    // Return existing active treatment with the same name instead of inserting a duplicate.
+    const [existing] = await db
+      .select()
+      .from(treatments)
+      .where(and(eq(treatments.routineId, routine.id), eq(treatments.name, trimmedName), isNull(treatments.deletedAt)))
+      .limit(1);
+
+    if (existing) {
+      return c.json({ success: true, data: existing }, 200);
+    }
 
     const [treatment] = await db
       .insert(treatments)
       .values({
         routineId: routine.id,
-        name: body.name.trim(),
+        name: trimmedName,
         daysOfWeek,
         frequencyPerWeek: daysOfWeek.length,
       })
@@ -135,7 +147,7 @@ treatmentsRoute.post('/', async (c) => {
     log.error('treatment create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'CREATE_TREATMENT_ERROR', message: 'Failed to create treatment', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'CREATE_TREATMENT_ERROR', message: 'Failed to create treatment' },
     }, 500);
   }
 });
@@ -213,7 +225,7 @@ treatmentsRoute.patch('/:id', async (c) => {
     log.error('treatment update failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'UPDATE_TREATMENT_ERROR', message: 'Failed to update treatment', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'UPDATE_TREATMENT_ERROR', message: 'Failed to update treatment' },
     }, 500);
   }
 });
@@ -249,7 +261,7 @@ treatmentsRoute.delete('/:id', async (c) => {
     log.error('treatment delete failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'DELETE_TREATMENT_ERROR', message: 'Failed to delete treatment', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'DELETE_TREATMENT_ERROR', message: 'Failed to delete treatment' },
     }, 500);
   }
 });

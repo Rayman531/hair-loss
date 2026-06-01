@@ -71,7 +71,6 @@ onboarding.get('/questions', async (c) => {
       error: {
         code: 'FETCH_QUESTIONS_ERROR',
         message: 'Failed to fetch onboarding questions',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
     };
     return c.json(errorResponse, 500);
@@ -168,7 +167,6 @@ onboarding.post('/responses', async (c) => {
       error: {
         code: 'SUBMIT_RESPONSES_ERROR',
         message: 'Failed to submit onboarding responses',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
     };
     return c.json(errorResponse, 500);

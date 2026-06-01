@@ -12,6 +12,7 @@ import account from './routes/account'
 
 type Env = {
   DATABASE_URL: string;
+  CLERK_SECRET_KEY: string;
   R2_ACCESS_KEY_ID: string;
   R2_SECRET_ACCESS_KEY: string;
   R2_ACCOUNT_ID: string;

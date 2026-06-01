@@ -9,7 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth } from '@clerk/clerk-expo';
 import React, { useEffect, useState, useMemo } from 'react';
 
 import { fetchProgressSessions, ProgressSession, Angle } from '@/lib/api/progress';
@@ -33,7 +33,7 @@ function formatDate(iso: string) {
 }
 
 export default function CompareScreen() {
-  const { user } = useUser();
+  const { getToken } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -66,10 +66,11 @@ export default function CompareScreen() {
   const [expandedUri, setExpandedUri] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
-
-    fetchProgressSessions(user.id)
-      .then((res) => {
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetchProgressSessions(token);
         if (res.success && Array.isArray(res.data)) {
           setSessions(res.data);
           // Default: newest (index 0) on right, oldest on left
@@ -80,10 +81,13 @@ export default function CompareScreen() {
         } else {
           setError('Failed to load sessions');
         }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [user?.id]);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   if (loading) {
     return (

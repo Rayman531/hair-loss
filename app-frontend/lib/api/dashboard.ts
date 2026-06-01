@@ -16,9 +16,9 @@ export type TreatmentLog = {
   treatmentName: string;
 };
 
-export async function fetchDashboard(userId: string) {
+export async function fetchDashboard(token: string) {
   const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
-    headers: { "X-User-Id": userId },
+    headers: { "Authorization": `Bearer ${token}` },
   });
 
   if (!response.ok) {
@@ -28,9 +28,9 @@ export async function fetchDashboard(userId: string) {
   return response.json();
 }
 
-export async function fetchTrackerTreatments(userId: string, day: string): Promise<TrackerTreatment[]> {
+export async function fetchTrackerTreatments(token: string, day: string): Promise<TrackerTreatment[]> {
   const response = await fetch(`${API_ENDPOINTS.TRACKER_TREATMENTS}?day=${day}`, {
-    headers: { "X-User-Id": userId },
+    headers: { "Authorization": `Bearer ${token}` },
   });
 
   if (!response.ok) return [];
@@ -39,9 +39,9 @@ export async function fetchTrackerTreatments(userId: string, day: string): Promi
   return json.success ? json.data : [];
 }
 
-export async function fetchTodayLogs(userId: string, month: string): Promise<TreatmentLog[]> {
+export async function fetchTodayLogs(token: string, month: string): Promise<TreatmentLog[]> {
   const response = await fetch(`${API_ENDPOINTS.TRACKER_TREATMENT_LOGS}?month=${month}`, {
-    headers: { "X-User-Id": userId },
+    headers: { "Authorization": `Bearer ${token}` },
   });
 
   if (!response.ok) return [];
@@ -51,7 +51,7 @@ export async function fetchTodayLogs(userId: string, month: string): Promise<Tre
 }
 
 export async function toggleTreatmentLog(
-  userId: string,
+  token: string,
   treatmentId: string,
   date: string,
   completed: boolean,
@@ -59,7 +59,7 @@ export async function toggleTreatmentLog(
   const response = await fetch(API_ENDPOINTS.TRACKER_TREATMENT_LOGS, {
     method: "POST",
     headers: {
-      "X-User-Id": userId,
+      "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ treatmentId, date, completed }),

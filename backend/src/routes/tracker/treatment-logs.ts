@@ -4,17 +4,17 @@ import { routines, treatments, treatmentLogs } from '../../db/schema';
 import { eq, and, gte, lte, isNull } from 'drizzle-orm';
 import { log } from '../../lib/logger';
 import { createPostHogClient, type PostHogEnv } from '../../lib/posthog';
+import { extractUserId } from '../../lib/auth';
 
-type Env = { DATABASE_URL: string } & PostHogEnv;
+type Env = { DATABASE_URL: string; CLERK_SECRET_KEY: string } & PostHogEnv;
 type Variables = { userId: string };
 
 const treatmentLogsRoute = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Auth guard
 treatmentLogsRoute.use('*', async (c, next) => {
-  const userId = c.req.header('X-User-Id');
+  const userId = await extractUserId(c.req.header('Authorization'), c.env.CLERK_SECRET_KEY);
   if (!userId) {
-    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Missing user authentication' } }, 401);
+    return c.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }, 401);
   }
   c.set('userId', userId);
   await next();
@@ -80,7 +80,7 @@ treatmentLogsRoute.get('/', async (c) => {
     log.error('treatment logs fetch failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'FETCH_LOGS_ERROR', message: 'Failed to fetch treatment logs', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'FETCH_LOGS_ERROR', message: 'Failed to fetch treatment logs' },
     }, 500);
   }
 });
@@ -175,7 +175,7 @@ treatmentLogsRoute.post('/', async (c) => {
     log.error('treatment log create failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return c.json({
       success: false,
-      error: { code: 'CREATE_LOG_ERROR', message: 'Failed to create treatment log', details: error instanceof Error ? error.message : 'Unknown error' },
+      error: { code: 'CREATE_LOG_ERROR', message: 'Failed to create treatment log' },
     }, 500);
   }
 });

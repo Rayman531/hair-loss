@@ -35,8 +35,7 @@ function getApiBaseUrl(): string {
     return `http://localhost:${DEV_PORT}`;
   }
 
-  // Production URL (replace with your actual production API URL)
-  return 'https://your-production-api.com';
+  return 'https://backend.eliarayan01.workers.dev';
 }
 
 export const API_BASE_URL = getApiBaseUrl();

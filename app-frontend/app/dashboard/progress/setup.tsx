@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useAuth } from '@clerk/clerk-expo';
 import React, { useState, useMemo } from 'react';
 
 import { Angle, ALL_ANGLES, uploadProgressSession } from '@/lib/api/progress';
@@ -35,7 +35,7 @@ const ANGLE_CONFIG: Record<Angle, AngleConfig> = {
 
 export default function SetupScreen() {
   const router = useRouter();
-  const { user } = useUser();
+  const { getToken } = useAuth();
   const { photos, reset } = useProgressSession();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -70,14 +70,16 @@ export default function SetupScreen() {
   };
 
   const handleUploadAll = async () => {
-    if (!allDone || !user?.id || uploading) return;
+    if (!allDone || uploading) return;
 
     setUploading(true);
     setUploadError(null);
     console.log('[Setup] Starting upload, photos:', Object.keys(photos));
     try {
+      const token = await getToken();
+      if (!token) { setUploadError('Not authenticated'); setUploading(false); return; }
       const result = await uploadProgressSession(
-        user.id,
+        token,
         photos as Record<Angle, CapturedPhoto>,
       );
 

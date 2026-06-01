@@ -74,7 +74,7 @@ const TREATMENT_LABELS: Record<string, string> = {
 
 export default function DashboardScreen() {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -131,30 +131,35 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (!user?.id) return;
 
-    fetchDashboard(user.id)
-      .then((res) => {
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetchDashboard(token);
         if (res.success) {
           setData(res.data);
         } else {
           setError(res.error?.message ?? 'Failed to load dashboard');
         }
-      })
-      .catch((err) => {
+      } catch (err: any) {
         setError(err.message);
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, [user?.id]);
 
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return;
 
-      Promise.all([
-        fetchTrackerTreatments(user.id, todayWeekday),
-        fetchTodayLogs(user.id, todayMonth),
-      ]).then(([treatments, logs]) => {
+      (async () => {
+        const token = await getToken();
+        if (!token) return;
+        const [treatments, logs] = await Promise.all([
+          fetchTrackerTreatments(token, todayWeekday),
+          fetchTodayLogs(token, todayMonth),
+        ]);
         setTrackerTreatments(treatments);
         const todayCompleted = new Set(
           logs
@@ -162,7 +167,7 @@ export default function DashboardScreen() {
             .map((l) => l.treatmentId),
         );
         setCompletedIds(todayCompleted);
-      });
+      })();
     }, [user?.id, today, todayMonth, todayWeekday])
   );
 
@@ -181,7 +186,9 @@ export default function DashboardScreen() {
     setTogglingIds((prev) => new Set(prev).add(treatmentId));
 
     try {
-      const result = await toggleTreatmentLog(user.id, treatmentId, today, newCompleted);
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+      const result = await toggleTreatmentLog(token, treatmentId, today, newCompleted);
       if (!result.success) {
         setCompletedIds((prev) => {
           const next = new Set(prev);
