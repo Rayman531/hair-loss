@@ -2,12 +2,14 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { ClerkProvider, ClerkLoaded, useUser } from '@clerk/clerk-expo';
+import { useEffect } from 'react';
 
 import { tokenCache } from '@/lib/token-cache';
 import { ThemeContextProvider, useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
 import { useNotifications } from '@/hooks/useNotifications';
+import { identifyUser, resetIdentity } from '@/lib/analytics';
 import React from 'react';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -23,7 +25,20 @@ export const unstable_settings = {
 function RootNavigator() {
   const { colorScheme } = useThemeContext();
   const colors = Colors[colorScheme];
+  const { user } = useUser();
   useNotifications();
+
+  useEffect(() => {
+    if (user?.id) {
+      identifyUser(user.id, {
+        email: user.primaryEmailAddress?.emailAddress,
+        firstName: user.firstName ?? undefined,
+        lastName: user.lastName ?? undefined,
+      });
+    } else {
+      resetIdentity();
+    }
+  }, [user?.id]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

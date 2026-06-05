@@ -16,6 +16,7 @@ import { useUser, useAuth } from '@clerk/clerk-expo';
 import { API_ENDPOINTS } from '@/constants/api';
 import { useRouter } from 'expo-router';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
@@ -24,6 +25,7 @@ import {
   updateNotificationPreferences,
   type NotificationPreferences,
 } from '@/lib/api/notifications';
+import { screen, capture, resetIdentity } from '@/lib/analytics';
 
 export default function AccountScreen() {
   const { user } = useUser();
@@ -42,7 +44,7 @@ export default function AccountScreen() {
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Notification preferences
-  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifEnabled, setNotifEnabled] = useState<boolean | null>(null);
   const [reminderHour, setReminderHour] = useState(9);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -57,6 +59,8 @@ export default function AccountScreen() {
       // Use defaults
     }
   }, [getToken]);
+
+  useFocusEffect(useCallback(() => { screen('Account'); }, []));
 
   useEffect(() => {
     loadNotifPrefs();
@@ -137,6 +141,7 @@ export default function AccountScreen() {
         body: JSON.stringify({ message: feedbackText.trim() }),
       });
       if (!res.ok) throw new Error('Failed to submit feedback');
+      capture('feedback_submitted');
       setFeedbackText('');
       setFeedbackVisible(false);
       Alert.alert('Thank you!', 'Your feedback has been submitted successfully.');
@@ -161,6 +166,8 @@ export default function AccountScreen() {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to delete account');
+      capture('account_deleted');
+      resetIdentity();
       await signOut();
       router.replace('/sign-in');
     } catch {
@@ -183,8 +190,11 @@ export default function AccountScreen() {
           <View style={styles.avatarRow}>
             <View style={[styles.avatar, themed.avatar]}>
               <Text style={[styles.avatarText, themed.avatarText]}>
-                {(user?.firstName?.[0] ?? '').toUpperCase()}
-                {(user?.lastName?.[0] ?? '').toUpperCase()}
+                {(
+                  [user?.firstName?.[0], user?.lastName?.[0]].filter(Boolean).join('') ||
+                  user?.primaryEmailAddress?.emailAddress?.[0] ||
+                  '?'
+                ).toUpperCase()}
               </Text>
             </View>
             <View style={styles.avatarInfo}>
@@ -215,7 +225,6 @@ export default function AccountScreen() {
         <Text style={styles.sectionTitle}>General</Text>
         <View style={[styles.card, themed.card]}>
           <View style={styles.row}>
-            <Text style={styles.rowIcon}>🌙</Text>
             <Text style={[styles.rowLabel, themed.rowLabel]}>Dark Mode</Text>
             <Switch
               value={isDarkMode}
@@ -231,7 +240,6 @@ export default function AccountScreen() {
             style={styles.row}
             onPress={() => router.push('/account/privacy')}
           >
-            <Text style={styles.rowIcon}>🔒</Text>
             <Text style={[styles.rowLabel, themed.rowLabel]}>Privacy Policy</Text>
             <Text style={styles.rowChevron}>›</Text>
           </Pressable>
@@ -242,7 +250,6 @@ export default function AccountScreen() {
             style={styles.row}
             onPress={() => setFeedbackVisible(true)}
           >
-            <Text style={styles.rowIcon}>💬</Text>
             <Text style={[styles.rowLabel, themed.rowLabel]}>Submit Feedback</Text>
             <Text style={styles.rowChevron}>›</Text>
           </Pressable>
@@ -250,7 +257,6 @@ export default function AccountScreen() {
           <View style={[styles.rowDivider, themed.divider]} />
 
           <Pressable style={styles.row} onPress={handleCustomerSupport}>
-            <Text style={styles.rowIcon}>✉️</Text>
             <Text style={[styles.rowLabel, themed.rowLabel]}>Support</Text>
             <Text style={styles.rowChevron}>›</Text>
           </Pressable>
@@ -262,21 +268,20 @@ export default function AccountScreen() {
         <Text style={styles.sectionTitle}>Notifications</Text>
         <View style={[styles.card, themed.card]}>
           <View style={styles.row}>
-            <Text style={styles.rowIcon}>🔔</Text>
             <Text style={[styles.rowLabel, themed.rowLabel]}>Daily Reminders</Text>
             <Switch
-              value={notifEnabled}
+              value={notifEnabled ?? false}
               onValueChange={handleToggleNotifications}
               trackColor={{ false: colors.switchTrackOff, true: colors.switchTrackOn }}
               thumbColor="#fff"
+              disabled={notifEnabled === null}
             />
           </View>
 
-          {notifEnabled && (
+          {notifEnabled === true && (
             <>
               <View style={[styles.rowDivider, themed.divider]} />
               <Pressable style={styles.row} onPress={() => setShowTimePicker(true)}>
-                <Text style={styles.rowIcon}>🕐</Text>
                 <Text style={[styles.rowLabel, themed.rowLabel]}>Reminder Time</Text>
                 <Text style={[styles.timeValue, { color: colors.accent }]}>{formatHour(reminderHour)}</Text>
                 <Text style={styles.rowChevron}>›</Text>
@@ -332,6 +337,8 @@ export default function AccountScreen() {
       <Pressable
         style={[styles.signOutBtn, themed.signOutBtn]}
         onPress={async () => {
+          capture('sign_out');
+          resetIdentity();
           await signOut();
           router.replace('/sign-in');
         }}
@@ -510,13 +517,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
   },
-  rowIcon: {
-    fontSize: 18,
-    marginRight: 12,
-  },
   rowLabel: {
     flex: 1,
     fontSize: 16,
+    fontWeight: '500',
   },
   rowChevron: {
     fontSize: 22,

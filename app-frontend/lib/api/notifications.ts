@@ -7,27 +7,27 @@ export type NotificationPreferences = {
   timezone: string;
 };
 
-export async function registerPushToken(token: string, token: string): Promise<{ success: boolean }> {
+export async function registerPushToken(authToken: string, pushToken: string): Promise<{ success: boolean }> {
   const response = await fetch(API_ENDPOINTS.NOTIFICATIONS_PUSH_TOKEN, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token: pushToken }),
   });
 
   return response.json();
 }
 
-export async function unregisterPushToken(token: string, token: string): Promise<{ success: boolean }> {
+export async function unregisterPushToken(authToken: string, pushToken: string): Promise<{ success: boolean }> {
   const response = await fetch(API_ENDPOINTS.NOTIFICATIONS_PUSH_TOKEN, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token: pushToken }),
   });
 
   return response.json();

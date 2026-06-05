@@ -1,6 +1,6 @@
 import { StyleSheet, ActivityIndicator, Pressable, ScrollView, View, Text, SafeAreaView } from 'react-native';
 import { useUser, useAuth } from '@clerk/clerk-expo';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, {
@@ -20,6 +20,7 @@ import {
   TrackerTreatment,
   TreatmentLog,
 } from '@/lib/api/dashboard';
+import { screen, capture } from '@/lib/analytics';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -74,7 +75,7 @@ const TREATMENT_LABELS: Record<string, string> = {
 
 export default function DashboardScreen() {
   const { user } = useUser();
-  const { signOut, getToken } = useAuth();
+  const { getToken } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -128,29 +129,33 @@ export default function DashboardScreen() {
     progressArrow: { color: colors.text },
   }), [dark, colors, shadows]);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
     if (!user?.id) return;
-
-    (async () => {
-      try {
-        const token = await getToken();
-        if (!token) return;
-        const res = await fetchDashboard(token);
-        if (res.success) {
-          setData(res.data);
-        } else {
-          setError(res.error?.message ?? 'Failed to load dashboard');
-        }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetchDashboard(token);
+      if (res.success) {
+        setData(res.data);
+      } else {
+        setError(res.error?.message ?? 'Failed to load dashboard');
       }
-    })();
-  }, [user?.id]);
+    } catch (err: any) {
+      setError(err.message ?? 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, getToken]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   useFocusEffect(
     useCallback(() => {
+      screen('Dashboard');
       if (!user?.id) return;
 
       (async () => {
@@ -189,7 +194,9 @@ export default function DashboardScreen() {
       const token = await getToken();
       if (!token) throw new Error('Not authenticated');
       const result = await toggleTreatmentLog(token, treatmentId, today, newCompleted);
-      if (!result.success) {
+      if (result.success) {
+        capture('treatment_logged', { completed: newCompleted });
+      } else {
         setCompletedIds((prev) => {
           const next = new Set(prev);
           if (wasCompleted) next.add(treatmentId);
@@ -224,7 +231,10 @@ export default function DashboardScreen() {
   if (error) {
     return (
       <ThemedView style={styles.centered}>
-        <ThemedText style={{ color: 'red' }}>{error}</ThemedText>
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
+        <Pressable style={styles.retryButton} onPress={loadDashboard}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </Pressable>
       </ThemedView>
     );
   }
@@ -236,7 +246,7 @@ export default function DashboardScreen() {
 
       {/* Welcome */}
       <ThemedText type="title" style={styles.welcome}>
-        Welcome back, {user?.firstName ?? 'there'}
+        Welcome back, {user?.firstName || 'there'}
       </ThemedText>
 
       {/* Motivational message */}
@@ -338,30 +348,6 @@ export default function DashboardScreen() {
         </Pressable>
       )}
 
-      {/* Dev Navigation Menu - only visible in development */}
-      {__DEV__ && (
-        <View style={styles.devMenu}>
-          <Text style={styles.devTitle}>Dev Navigation</Text>
-          <Link href="/onboarding" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Onboarding</Text>
-          </Link>
-          <Link href="/onboarding-complete" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Onboarding Complete</Text>
-          </Link>
-          <Link href="/sign-up" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Sign Up</Text>
-          </Link>
-          <Link href="/routine-tracker-setup" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Routine Tracker Setup</Text>
-          </Link>
-          <Link href="/dashboard/progress" style={styles.devLink}>
-            <Text style={styles.devLinkText}>→ Progress Tracker</Text>
-          </Link>
-          <Pressable onPress={() => signOut()} style={styles.signOutBtn}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </Pressable>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -374,6 +360,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    color: '#D44332',
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    backgroundColor: '#C4A882',
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   content: {
     padding: 20,
@@ -515,37 +519,5 @@ const styles = StyleSheet.create({
   progressArrow: {
     fontSize: 24,
     marginLeft: 12,
-  },
-  devMenu: {
-    marginTop: 30,
-    padding: 15,
-    backgroundColor: '#FFF9EC',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E5B94E',
-  },
-  devTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#7A6520',
-  },
-  devLink: {
-    paddingVertical: 8,
-  },
-  devLinkText: {
-    color: '#7A6520',
-    fontSize: 14,
-  },
-  signOutBtn: {
-    marginTop: 15,
-    backgroundColor: '#D44332',
-    padding: 10,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  signOutText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
 });

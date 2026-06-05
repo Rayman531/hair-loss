@@ -104,7 +104,7 @@ export default function GalleryScreen() {
         setDeletingId(null);
       }
     },
-    [user?.id],
+    [getToken],
   );
 
   const handleDelete = useCallback(

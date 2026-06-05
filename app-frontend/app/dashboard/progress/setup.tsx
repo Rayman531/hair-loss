@@ -16,6 +16,7 @@ import type { CapturedPhoto } from '@/lib/api/progress';
 import { useProgressSession } from './_context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { capture } from '@/lib/analytics';
 import { FrontViewIcon } from '@/components/icons/FrontViewIcon';
 import { TopViewIcon } from '@/components/icons/TopViewIcon';
 import { RightViewIcon } from '@/components/icons/RightViewIcon';
@@ -85,6 +86,7 @@ export default function SetupScreen() {
 
       console.log('[Setup] Upload result:', JSON.stringify(result));
       if (result.success) {
+        capture('progress_photos_uploaded');
         reset();
         router.replace('/dashboard/progress/gallery');
       } else {
@@ -151,13 +153,18 @@ export default function SetupScreen() {
       {uploadError && (
         <View style={[styles.errorBox, themed.errorBox]}>
           <Text style={[styles.errorText, themed.errorText]}>{uploadError}</Text>
-          <Pressable onPress={() => setUploadError(null)}>
-            <Text style={[styles.errorDismiss, themed.errorText]}>Dismiss</Text>
-          </Pressable>
+          <View style={styles.errorActions}>
+            <Pressable onPress={handleUploadAll} disabled={uploading}>
+              <Text style={[styles.errorDismiss, themed.errorText, styles.errorRetry]}>Retry</Text>
+            </Pressable>
+            <Pressable onPress={() => setUploadError(null)}>
+              <Text style={[styles.errorDismiss, themed.errorText]}>Dismiss</Text>
+            </Pressable>
+          </View>
         </View>
       )}
 
-      {allDone && (
+      {allDone && !uploadError && (
         <Pressable
           style={[styles.continueButton, themed.continueButton, uploading && styles.continueButtonDisabled]}
           onPress={handleUploadAll}
@@ -256,10 +263,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
   },
+  errorActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginLeft: 8,
+    flexShrink: 0,
+  },
   errorDismiss: {
     fontSize: 13,
     fontWeight: '600',
-    marginLeft: 12,
+  },
+  errorRetry: {
+    fontWeight: '700',
   },
   continueButton: {
     marginTop: 16,

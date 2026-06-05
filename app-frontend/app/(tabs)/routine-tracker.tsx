@@ -18,6 +18,7 @@ import AdherenceCalendar from '../../components/tracker/AdherenceCalendar';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { screen } from '@/lib/analytics';
 import { Colors } from '@/constants/theme';
 
 interface TreatmentConsistency {
@@ -129,7 +130,7 @@ export default function RoutineTrackerScreen() {
 
       const [summaryRes, heatmapRes] = await Promise.all([
         fetch(API_ENDPOINTS.TRACKER_SUMMARY, { headers }).then((r) => r.json()),
-        fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${displayMonth}`, { headers })
+        fetch(`${API_ENDPOINTS.TRACKER_HEATMAP}?month=${currentMonth}`, { headers })
           .then((r) => r.json())
           .catch(() => null),
       ]);
@@ -148,10 +149,11 @@ export default function RoutineTrackerScreen() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, displayMonth]);
+  }, [getToken, currentMonth]);
 
   useFocusEffect(
     useCallback(() => {
+      screen('Routine Tracker');
       fetchData();
     }, [fetchData])
   );

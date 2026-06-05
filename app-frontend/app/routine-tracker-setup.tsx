@@ -18,6 +18,7 @@ import { CrownMascot } from '@/components/CrownMascot';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
+import { capture } from '@/lib/analytics';
 import { DutasterideIcon } from '@/components/icons/DutasterideIcon';
 import { FinasterideIcon } from '@/components/icons/FinasterideIcon';
 import { MinoxidilIcon } from '@/components/icons/MinoxidilIcon';
@@ -53,7 +54,7 @@ const TREATMENTS: Treatment[] = [
 const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'] as const;
 
-type Step = 'loading' | 'select' | 'configure' | 'add-more' | 'complete';
+type Step = 'loading' | 'disclaimer' | 'select' | 'configure' | 'add-more' | 'complete';
 
 // ─── Component ───────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ export default function RoutineTrackerSetupScreen() {
     } catch {
       // If check fails, just show the setup flow
     }
-    setStep('select');
+    setStep('disclaimer');
   };
 
   // ─── Treatment selection handlers ───────────────────────────
@@ -276,7 +277,56 @@ export default function RoutineTrackerSetupScreen() {
     );
   }
 
-  // ─── Step 1: Treatment Selection ────────────────────────────
+  // ─── Step 1: Medical Disclaimer ─────────────────────────────
+
+  if (step === 'disclaimer') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+
+        <View style={styles.header}>
+          <Text style={[styles.headerText, { color: colors.textSecondary }]}>Routine Tracker - Setup</Text>
+        </View>
+
+        <View style={styles.centeredContent}>
+          <CrownMascot state="encouraging" size={110} />
+
+          <Text style={[styles.disclaimerTitle, { color: colors.text }]}>
+            Before you get started
+          </Text>
+
+          <View style={[styles.disclaimerCard, { backgroundColor: colors.accentSurface, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.disclaimerHeading, { color: colors.text }]}>
+              Medical Disclaimer
+            </Text>
+            <Text style={[styles.disclaimerBody, { color: colors.textSecondary }]}>
+              Follix is a personal tracking tool designed to help you log and monitor your hair loss treatments. It is{' '}
+              <Text style={[styles.disclaimerBold, { color: colors.text }]}>not a medical service</Text> and does not provide medical advice, diagnosis, or treatment recommendations.
+            </Text>
+            <Text style={[styles.disclaimerBody, { color: colors.textSecondary }]}>
+              Some treatments listed — including Finasteride and Dutasteride — are{' '}
+              <Text style={[styles.disclaimerBold, { color: colors.text }]}>prescription medications</Text> that carry potential side effects. Always consult a qualified healthcare provider before starting, stopping, or changing any treatment.
+            </Text>
+            <Text style={[styles.disclaimerBody, { color: colors.textSecondary }]}>
+              By continuing, you confirm that you have sought or will seek appropriate medical advice.
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
+          <TouchableOpacity
+            style={[styles.continueButton, { backgroundColor: colors.accent }]}
+            onPress={() => { capture('disclaimer_acknowledged'); setStep('select'); }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.continueButtonText}>I Understand — Continue</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ─── Step 2: Treatment Selection ─────────────────────────────
 
   if (step === 'select') {
     const hasSelection = selectedTreatments.length > 0;
@@ -337,7 +387,7 @@ export default function RoutineTrackerSetupScreen() {
     );
   }
 
-  // ─── Step 2: Day & Time Config ──────────────────────────────
+  // ─── Step 3: Day & Time Config ──────────────────────────────
 
   if (step === 'configure' && currentTreatment) {
     return (
@@ -461,7 +511,7 @@ export default function RoutineTrackerSetupScreen() {
     );
   }
 
-  // ─── Step 3: Add More? ──────────────────────────────────────
+  // ─── Step 4: Add More? ──────────────────────────────────────
 
   if (step === 'add-more') {
     const hasMore = availableTreatments.length > 0;
@@ -509,7 +559,7 @@ export default function RoutineTrackerSetupScreen() {
     );
   }
 
-  // ─── Step 4: Complete ───────────────────────────────────────
+  // ─── Step 5: Complete ───────────────────────────────────────
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -534,7 +584,7 @@ export default function RoutineTrackerSetupScreen() {
       <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
         <TouchableOpacity
           style={[styles.continueButton, { backgroundColor: colors.accent }]}
-          onPress={() => router.replace('/(tabs)')}
+          onPress={() => { capture('routine_setup_complete'); router.replace('/(tabs)'); }}
           activeOpacity={0.8}
         >
           <Text style={styles.continueButtonText}>Continue</Text>
@@ -577,6 +627,34 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingBottom: 100,
+  },
+
+  // ── Disclaimer step ──────────────────────────
+
+  disclaimerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 24,
+    marginBottom: 20,
+  },
+  disclaimerCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 20,
+    gap: 12,
+  },
+  disclaimerHeading: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  disclaimerBody: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  disclaimerBold: {
+    fontWeight: '700',
   },
 
   // ── Select step ──────────────────────────────

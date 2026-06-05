@@ -6,6 +6,7 @@ import { useSignUp } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { useThemeContext } from '@/context/theme-context';
 import { Colors } from '@/constants/theme';
+import { capture } from '@/lib/analytics';
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -37,6 +38,7 @@ export default function SignUpScreen() {
       });
 
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      capture('sign_up_started');
       setPendingVerification(true);
     } catch (err: any) {
       console.error('Sign up error:', err);
@@ -59,6 +61,7 @@ export default function SignUpScreen() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
+        capture('sign_up_verified');
         router.replace('/routine-tracker-setup');
       } else {
         console.error('Verification incomplete:', result);
